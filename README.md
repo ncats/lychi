@@ -13,6 +13,6 @@ all` instead. The self-contained jar file can be invoked directly;
 e.g., 
 
 ```
-java -jar dist/lychi-all-v0.1.jar tests//standardizer_case1.smi
+java -jar dist/lychi-all-v0.1.jar tests/standardizer_case1.smi
 ```
 

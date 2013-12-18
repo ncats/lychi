@@ -2303,10 +2303,8 @@ public class LyChIStandardizer {
 	MolImporter mi = new MolImporter (is);
 
 	TautomerGenerator tg = new SayleDelanyTautomerGenerator ();
-	//tg.set(TautomerGenerator.FLAG_ALL);
-
 	LyChIStandardizer msz = new LyChIStandardizer (tg);
-	//msz.removeSaltOrSolvent(false);
+	msz.removeSaltOrSolvent(true);
 
 	for (Molecule mol = new Molecule (); ; ) {
             try {
@@ -2353,14 +2351,19 @@ public class LyChIStandardizer {
 		    os.print(mol.toFormat("sdf"));
 		}
 		else {
-		    os.println(smi + "\t" + name + "\t" 
-			       + hashKey (mol)); 
 		    if (msz.getFragmentCount() > 1) {
 			for (Molecule frag : msz.getFragments()) {
-			    os.println(ChemUtil.canonicalSMILES (frag) + "\t" 
-				       + name + "\t" + hashKey (frag)); 
+                            if (frag != null) {
+                                os.println(ChemUtil.canonicalSMILES(frag) 
+                                           + "\t" + name 
+                                           + "\t" + hashKey (frag)); 
+                            }
 			}
 		    }
+                    else {
+                        os.println(smi + "\t" + name + "\t" 
+                                   + hashKey (mol)); 
+                    }
 		}
 		/*
 		  Molecule[] f = msz.getFragments();
@@ -2377,7 +2380,7 @@ public class LyChIStandardizer {
             }
             catch (Exception ex) {
                 logger.log(Level.SEVERE, "** can't process molecule "
-                           +mol.getName());
+                           +mol.getName()+": "+ex.getMessage(), ex);
             }
             catch (StackOverflowError err) {
                 logger.log(Level.SEVERE,"** can't parse molecule at line: "
