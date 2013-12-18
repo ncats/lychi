@@ -1,0 +1,3 @@
+# examples of calling aromatize() and dearomtize() back to back don't work!
+C(COC1=CC(=CN=C1)C2=CC=C3C=NC=CC3=C2)CC4=CNC=C4	AADBRN
+C(COC1=CC(=CN=C1)C2=CC3=C(C=C2)C=NC=C3)CC4=CNC=C4	AADEXT

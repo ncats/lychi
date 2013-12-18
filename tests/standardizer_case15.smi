@@ -1,0 +1,3 @@
+# protecting double bond stereo see https://www.chemaxon.com/forum/ftopic7041.html
+CC(=O)N\C(=C/C1=CC=CC(=C1)C1=C(C)NN=C1)C(=O)NC1=CC(C)=CC(C)=C1	1
+CC(=O)N\C(=C/C1=CC=CC(=C1)C1=CNN=C1C)C(=O)NC1=CC(C)=CC(C)=C1	2

@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<project name="lychi" default="dist" basedir=".">
+  <property name="build" value="build"/>
+  <property name="dist" value="dist"/>
+  <property name="lib" value="lib"/>
+  <property name="web" value="web/WEB-INF"/>
+  <property name="classes" value="${web}/classes"/>
+  <property name="weblib" value="${web}/lib"/>
+  <property name="src" value="src"/>
+  <property name="version" value="0.1"/>
+  <property name="jar" value="lychi-v${version}.jar"/>
+
+  <path id="compile.classpath">
+    <fileset dir="${lib}">
+      <include name="**/*.jar"/>
+    </fileset>
+    <fileset dir="${weblib}">
+      <include name="**/*.jar"/>
+    </fileset>
+    <fileset dir="${dist}">
+      <include name="**/*.jar"/>
+    </fileset>
+    <pathelement location="${build}"/>
+  </path>
+
+  <target name="init">
+    <tstamp>
+       <format property="touch.time"
+                pattern="MM/dd/yyyy 'at' HH:mm:ss z"/>
+    </tstamp>
+
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}"/>
+    <mkdir dir="${dist}"/>
+  </target>
+
+  <target name="compile" depends="init">
+    <javac srcdir="${src}"
+           destdir="${build}"
+           deprecation="on"
+           debug="on"
+           includeantruntime="no"
+           target="1.5"
+           source="1.5">
+      <classpath refid="compile.classpath"/>
+    </javac>
+  </target>
+
+  <target name="dist" depends="compile">
+     <copy todir="${build}">
+       <fileset dir="${src}" includes="**/resources/**"/>
+     </copy>
+     <jar jarfile="${dist}/${jar}"
+         basedir="${build}"
+         includes="**">
+       <manifest>
+          <attribute name="Built-By" value="${user.name}"/>
+       </manifest>
+     </jar>
+  </target>
+
+  <target name="deploy" depends="dist">
+     <copy todir="${deploy}">
+       <fileset dir="${dist}" includes="${jar}"/>
+     </copy>
+  </target>
+
+  <!-- generate self-contained jar file-->
+  <target name="all" depends="dist">
+     <property name="tmp" value="${dist}/tmp"/>
+     <mkdir dir="${tmp}"/>
+     <unjar src="${lib}/jchem3.jar" dest="${tmp}"/>
+     <copy todir="${tmp}">
+        <fileset dir="${build}" includes="**"/>
+     </copy>
+     <jar jarfile="${dist}/lychi-all-v${version}.jar"
+         basedir="${tmp}"
+         includes="**">
+       <manifest>
+          <attribute name="Built-By" value="${user.name}"/>
+          <attribute name="Main-class" value="lychi.LyChIStandardizer"/>
+       </manifest>
+     </jar>
+     <delete dir="${tmp}"/> 
+  </target>
+
+  <target name="clean">
+     <delete includeEmptyDirs="true"> 
+        <fileset dir="${build}" includes="**/*"/>
+     </delete>
+  </target>
+
+  <target name="test1" depends="dist">
+     <echo message="=== Test case 1"/>
+     <java classname="lychi.LyChIStandardizer" maxmemory="256m"
+            classpathref="compile.classpath" fork="true">
+        <arg value="tests/standardizer_case1.smi"/>
+     </java>
+  </target>
+
+</project>

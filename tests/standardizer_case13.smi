@@ -1,0 +1,5 @@
+# Fig. 5 in Sayle's jcamd tautomer
+CN1C=CC=C2C=CN=C12
+CN1C=CC=C2C=C[NH+]=C12
+C[N+]1=C2NC=CC2=CC=C1
+C[N+]1=C2[N-]C=CC2=CC=C1

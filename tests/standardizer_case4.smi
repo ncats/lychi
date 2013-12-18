@@ -1,0 +1,13 @@
+[H][N+]([H])([H])CC([O-])=O	1
+[H][N+]([H])([H])CC(O)=O	2
+[H]N([H])CC([O-])=O	3
+CC([NH3+])C([O-])=O	4
+CC(N)C(O)=O	5
+NCCCCC(N)C(O)=O	6
+NC(CCCC[NH3+])C([O-])=O	7
+NCCCCC([NH3+])C([O-])=O	8
+NC(CCC(O)=O)C(O)=O	9
+[NH3+]C(CCC([O-])=O)C([O-])=O	10
+NC(CCC([O-])=O)C(O)=O	11
+NC(CCC(O)=O)C([O-])=O	12
+[H]N([H])CC(O)=O	13

@@ -1,0 +1,14 @@
+# inchi tech fig. 11
+C[N+](C)(C)CC(CC(O)=O)C(O)=O	3a
+CN=[N+](NN)NN	1a
+C[N+](C)=C(\C=C/N)/C=C\O	2a
+C[N+]1(C)NC2=CC(=O)C(=S)C=C2N1	4a
+O=CC1=N[N-]N=C1C=S	5a
+CCN[C+](N)NC	fig7_sayle
+C[n+]1ccc(cc1)CCNC(=O)c2cc3ccccc3n2Cc4cccc(c4)C(=N)N	wombat:95086
+CCNC1=C(C=C(C=C1)N=[N+]=[N-])[N+]([O-])=O
+OC1=C(C=C(C=C1)N=[N+]=[N-])[N+]([O-])=O
+CCOC(=O)C1=C(O)C(=O)N(C1C1=CC=CC(=C1)[N+]([O-])=O)C1=CC=CC=C1	26671595
+COC1=CC=CC=C1NS(=O)(=O)C1=CC=C2N=C(S)OC2=C1	85270222
+CCN1C2=CC=CC=C2N3C(=NN=C3C4=C(NN=C41)C5=CC=CC=C5)C	383802
+[CH3:1][CH2:2][N:3]1[C:19]2=[N:18][NH:17][C:16](=[C:15]2[C:14]3=[N:13][N:12]=[C:11]([CH3:26])[N:10]3[C:9]4=[C:4]1[CH:5]=[CH:6][CH:7]=[CH:8]4)[C:20]5=[CH:25][CH:24]=[CH:23][CH:22]=[CH:21]5
