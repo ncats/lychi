@@ -9,4 +9,10 @@ ant
 ```
 
 To build a self-contained jar with dependencies included, use `ant
-all` instead.
+all` instead. The self-contained jar file can be invoked directly;
+e.g., 
+
+```
+java -jar dist/lychi-all-v0.1.jar tests//standardizer_case1.smi
+```
+
