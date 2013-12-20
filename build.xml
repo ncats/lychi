@@ -98,4 +98,11 @@
      </java>
   </target>
 
+  <target name="run" depends="dist">
+     <echo message="==== args: ${args}"/>
+     <java classname="lychi.LyChIStandardizer" maxmemory="256m"
+            classpathref="compile.classpath" fork="true">
+        <arg value="${args}"/>
+     </java>
+  </target>
 </project>

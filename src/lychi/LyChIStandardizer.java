@@ -315,7 +315,6 @@ public class LyChIStandardizer {
     }
 
     public void protonate (Molecule mol) {
-	TautomerGenerator tau = null;
 	for (int i = 0; i < neutralizer.length; ++i) {
 	    SMIRKS rule = neutralizer[i];
 	    if (rule.transform(mol)) {
@@ -324,32 +323,27 @@ public class LyChIStandardizer {
 		    System.err.println
 			("=> " + mol.toFormat("smiles:q"));
 		}
-		if (tau == null) {
-		    tau = new SayleDelanyTautomerGenerator ();
-		}
 	    }
 	}
 
-	if (tau != null) {
-	    /*
-	     * once [X-] is converted to XH, then we need to run
-	     * tautomer to get the preferred tautomeric form, e.g.,
-	     *  CC(=S)[O-] => CC(=S)O => CC(S)(=O)
-	     */
-	    Molecule clone = mol.cloneMolecule();
-	    try {
-		tau.generate(mol);
-		Molecule cantau = tau.getCanonicalTautomer();
-		if (cantau != mol) {
-		    cantau.clonecopy(mol);
-		}
-	    }
-	    catch (Exception ex) {
-		logger.log(Level.WARNING, 
-			   "TautomerGenerator fails: "+ex.getMessage(), ex);
-		clone.clonecopy(mol);
-	    }
-	}
+        /*
+         * once [X-] is converted to XH, then we need to run
+         * tautomer to get the preferred tautomeric form, e.g.,
+         *  CC(=S)[O-] => CC(=S)O => CC(S)(=O)
+         */
+        Molecule clone = mol.cloneMolecule();
+        try {
+            taugen.generate(mol);
+            Molecule cantau = taugen.getCanonicalTautomer();
+            if (cantau != mol) {
+                cantau.clonecopy(mol);
+            }
+        }
+        catch (Exception ex) {
+            logger.log(Level.WARNING, 
+                       "TautomerGenerator fails: "+ex.getMessage(), ex);
+            clone.clonecopy(mol);
+        }
     }
 
     public static Molecule removeSaltOrSolvent (Molecule mol) {
@@ -1383,31 +1377,43 @@ public class LyChIStandardizer {
 		    b.setFlags(f & MolBond.REACTING_CENTER_MASK,
 			       MolBond.REACTING_CENTER_MASK);
 		}
-	    }
 	    
-	    if (b.getType() == 2) {
-		int s = b.calcStereo2();
-		switch (s) {
-		case MolBond.CIS:
-		case MolBond.TRANS:
-		    b.setFlags(s, MolBond.CTUMASK);
-		    break;
-		    
-		case MolBond.CTUNSPEC:
-		    logger.warning
-			(mol.getName()+": bond "+(mol.indexOf(b)+1)
-			 +" has unspecified E/Z");
-		default:
-		    b.setFlags(0, MolBond.CTUMASK);
-		}
-	    }
+                if (b.getType() == 2) {
+                    int s = b.calcStereo2();
+                    switch (s) {
+                    case MolBond.CIS:
+                    case MolBond.TRANS:
+                        if ((f & MolBond.TYPE_MASK) != 2) {
+                            // unspecified due to tautomer
+                            b.setFlags(MolBond.CIS|MolBond.TRANS, 
+                                       MolBond.CTUMASK);
+                            logger.info("Double bond "+(mol.indexOf(b)+1)
+                                        +" is unspecified E/Z due "
+                                        +"to tautomer!");
+                        }
+                        else {
+                            b.setFlags(s, MolBond.CTUMASK);
+                        }
+                        break;
+                        
+                    case MolBond.CTUNSPEC:
+                        logger.warning
+                            (mol.getName()+": bond "+(mol.indexOf(b)+1)
+                             +" has unspecified E/Z");
+                    default:
+                        b.setFlags(MolBond.CIS|MolBond.TRANS, 
+                                   MolBond.CTUMASK);
+                    }
+                }
+            }
 	}
 	bflags = null;
 
         // only override stereo if the input molecule has coordinates
 	adjustStereo (dim >= 2, chiral, mol);
 	if (debug) {
-	    System.err.println("Stereo Adjustment: " + ChemUtil.canonicalSMILES (mol)
+	    System.err.println("Stereo Adjustment: " 
+                               + ChemUtil.canonicalSMILES (mol)
 			       //+ " "+mol.toFormat("smiles:q"));
 			       +"\n"+mol.toFormat("mol"));
 	}
@@ -1461,6 +1467,13 @@ public class LyChIStandardizer {
 
     void adjustStereo (int[] chiral, Molecule mol) {
         adjustStereo (true, chiral, mol);
+    }
+
+    static String getChiralFlag (int flag) {
+        if (flag == MolAtom.CHIRALITY_R) return "R";
+        if (flag == MolAtom.CHIRALITY_S) return "S";
+        if (flag == 0) return "R/S";
+        return "?";
     }
 
     void adjustStereo (boolean override, int[] chiral, Molecule mol) {
@@ -1721,19 +1734,40 @@ public class LyChIStandardizer {
             if (chirality == MolAtom.CHIRALITY_R 
                 || chirality == MolAtom.CHIRALITY_S) {
                 // keep this
+                if (chirality != chiral[map]) {
+                    logger.warning("Stereocenter at atom "
+                                   +atom.getSymbol()+":"+(map+1)+" changed "
+                                   +"from "+getChiralFlag (chiral[map])
+                                   +" to "+getChiralFlag (chirality)+"!");
+                }
             }
             else if (chiral[map] == MolAtom.CHIRALITY_R
                      || chiral[map] == MolAtom.CHIRALITY_S) {
+                logger.warning("No stereocenter defined at atom "
+                               +atom.getSymbol()+":"+(map+1)
+                               +" but was original defined as "
+                               +getChiralFlag (chiral[map]));
                 try {
                     mol.setChirality(i, chiral[map]);
                     int count = countBondParity (atom, 0);
                     logger.warning("Overriding chirality for atom "
-                                   +(map+1)+" ("+count+"/"+atom.getBondCount()
-                                   +" parity) "
-                                   +(chiral[map] == MolAtom.CHIRALITY_R 
-                                     ? "R" 
-                                     : (chiral[map] == MolAtom.CHIRALITY_S 
-                                        ? "S" : "-")));
+                                   +atom.getSymbol()+":"+(map+1)
+                                   +" ("+count+"/"+atom.getBondCount()
+                                   +" parity) "+ getChiralFlag (chiral[map])
+                                   +" "+getChiralFlag (mol.getChirality(i)));
+
+                    /*
+                    for (int k = 0; k < atom.getBondCount(); ++k) {
+                        MolBond b = atom.getBond(k);
+                        MolAtom xa = b.getOtherAtom(atom);
+                        int s = b.getFlags() & MolBond.STEREO1_MASK;
+                        String dir = "-";
+                        if (s == MolBond.UP) dir = "UP";
+                        else if (s == MolBond.DOWN) dir = "DOWN";
+                        logger.info(dir+" neighbor "+xa.getSymbol()+":"
+                                    +(xa.getAtomMap()+1));
+                    }
+                    */
                 }
                 catch (Exception ex) {
                     // bogus parity, so clear out the bond
@@ -1742,6 +1776,9 @@ public class LyChIStandardizer {
                 }
             }
         }
+
+        // not sure what exact this does
+        mol.adjustMultiChiralFlag();
     }
 
     void cleanUp (int[] aflags, Molecule mol) {
@@ -2392,7 +2429,8 @@ public class LyChIStandardizer {
 
     public static void main(String[] argv) throws Exception {
 	String tag = null;
-	Vector<String> input = new Vector<String>();
+
+	List<String> input = new ArrayList<String>();
 	for (int i = 0; i < argv.length; ++i) {
 	    if (argv[i].startsWith("tag=")) {
 		tag = argv[i].substring(4);
@@ -2403,8 +2441,8 @@ public class LyChIStandardizer {
 	}
 
 	if (input.isEmpty()) {
-	    System.err.println
-		("** reading input from STDIN & writing to STDOUT");
+            logger.info
+		("** Reading input from STDIN & writing to STDOUT");
 	    process (tag, System.in, System.out);
 	}
 	else {
