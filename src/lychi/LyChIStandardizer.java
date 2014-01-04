@@ -49,9 +49,6 @@ public class LyChIStandardizer {
      */
     public static final int VERSION = 0x10;
 
-    public static final String REVDATE = 
-	"$Date: 2010-02-01 14:49:22 -0500 (Mon, 01 Feb 2010) $";
-
     static private boolean debug = false;
     static {
 	try {
@@ -793,24 +790,219 @@ public class LyChIStandardizer {
 	}
     }
 
-    public static void makeHydrogensImplicit (Molecule m) {
-	m.hydrogenize(false);
-	m.implicitizeHydrogens(MolAtom.ALL_H & ~MolAtom.ISOTOPE_H);
+    /**
+     * This method performs rudimentary cleanup of bond parities
+     * and implicit/explicit hydrogens. It's probably unnecessarily
+     * complicated!
+     */
+    public static void preprocessing (final Molecule m) {
+        // suppress all hydrogens except for isotopes
+        m.hydrogenize(false);
+        m.implicitizeHydrogens(MolAtom.ALL_H & ~MolAtom.ISOTOPE_H);
 
-	MolAtom[] atoms = m.getAtomArray();
-	for (int i = 0; i < atoms.length; ++i) {
-	    MolAtom a = atoms[i];
-	    int isotope = MolAtom.isotopeType(a.getAtno(), a.getMassno());
-	    if (a.getAtno() == 1 && isotope == 0) {
-		logger.log(Level.WARNING, "H atom not implicitized");
-		_atom (System.err, i+1, a);
-	    }
-	    else if (1 == isotope) {
-		logger.log(Level.WARNING, "Atom contains unstable isotope");
-		_atom (System.err, i+1, a);
-	    }
-	}
-    }
+        List<MolAtom> addH = new ArrayList<MolAtom>();
+
+        int[] rank = new int[m.getAtomCount()];
+        m.getGrinv(rank);
+
+        Map<MolAtom, Integer> chirality = new HashMap<MolAtom, Integer>();
+        Map<MolAtom, MolBond[]> saturated = new HashMap<MolAtom, MolBond[]>();
+        for (int i = 0; i < m.getAtomCount(); ++i) {
+            int chiral = m.getChirality(i);
+            MolAtom a = m.getAtom(i);
+            if (chiral == MolAtom.CHIRALITY_R 
+                || chiral == MolAtom.CHIRALITY_S) {
+                if (a.getImplicitHcount() > 0)  {
+                    addH.add(a);
+                }
+                else {
+                    // check that the parity bonds around this stereocenter
+                    // if there are more than one, keep the one associate
+                    // with the lowest rank. if there is another bond that
+                    // is lower rank and for which no parity is assigned, 
+                    // then we move the parity to that bond
+                    List<MolBond> rbonds = new ArrayList<MolBond>();
+                    for (int k = 0; k < a.getBondCount(); ++k) {
+                        MolBond b = a.getBond(k);
+                        MolAtom xa = b.getOtherAtom(a);
+
+                        // S(=O)(*)(*) 
+                        if (rbonds.isEmpty() || b.getType() != 1)
+                            rbonds.add(b);
+                        else if (xa.getAtno() == 1) {
+                            rbonds.clear();
+                            break;
+                        }
+                        else {
+                            int r = rank[m.indexOf(xa)];
+                            int j = 0;
+                            for (; j < rbonds.size(); ++j) {
+                                MolAtom ra = rbonds.get(j).getOtherAtom(a);
+                                if (r < rank[m.indexOf(ra)]) {
+                                    rbonds.add(j, b);
+                                    break;
+                                }
+                            }
+
+                            if (j == rbonds.size())
+                                rbonds.add(b); // append
+                        }
+                    }
+
+                    if (!rbonds.isEmpty()) {
+                        saturated.put(a, rbonds.toArray(new MolBond[0]));
+                    }
+                }
+                chirality.put(a, chiral);
+            } 
+            else if (chiral != 0) {
+                m.setChirality(i, 0);
+            }
+        } // endfor each atom
+
+        /*
+         * if there are no coordinates in the input structure, the
+         * parities on the bonds aren't perceived, so we force them
+         * here.
+         */
+        if (m.getDim() < 2) {
+            m.clean(2, null);
+        }
+
+        /*
+         * now handle stereocenters with explicit Hs
+         */
+        List<MolAtom> newH = new ArrayList<MolAtom>();
+        for (MolAtom a : addH) {
+            MolAtom h = new MolAtom (1);
+            MolBond bond = new MolBond (a, h);
+
+            // arbitrary set the parity and we'll clean it up later
+            bond.setFlags(MolBond.UP, MolBond.STEREO1_MASK);
+            for (int k = 0; k < a.getBondCount(); ++k) {
+                MolBond b = a.getBond(k);
+                int parity = b.getFlags() & MolBond.STEREO1_MASK;
+                if (parity == MolBond.UP || parity == MolBond.DOWN) {
+                    bond.setFlags(parity == MolBond.UP 
+                                  ? MolBond.DOWN : MolBond.DOWN, 
+                                  MolBond.STEREO1_MASK);
+                    break;
+                }
+            }
+
+            // now reset all existing bond parities (if any)
+            for (int k = 0; k < a.getBondCount(); ++k) {
+                MolBond b = a.getBond(k);
+                b.setFlags(0, MolBond.STEREO1_MASK);
+            }
+
+            int parity = bond.getFlags() & MolBond.STEREO1_MASK;
+            if (parity == MolBond.UP || parity == MolBond.DOWN) {
+                if (debug) {
+                    logger.info("++ adding explicit H ("+getParityFlag (parity)
+                                +") at stereocenter "+(m.indexOf(a)+1));
+                }
+                m.add(h);
+                m.add(bond);
+                newH.add(h);
+            }
+            else {
+                logger.warning("Stereocenter "+(m.indexOf(a)+1)+" has "
+                               +"no parity bonds; likely due "
+                               +"to lack of coordinates!");
+            }
+        }
+
+        if (!newH.isEmpty())
+            ChemUtil.localLayout(newH.toArray(new MolAtom[0]));
+
+        if (debug) {
+            logger.info("-- "+newH.size()+" chiral Hs added\n"
+                        +m.toFormat("mol"));
+        }
+
+        /*
+         * now process the saturated stereocenters
+         */
+        for (Map.Entry<MolAtom, MolBond[]> me : saturated.entrySet()) {
+            MolAtom a = me.getKey();
+            MolBond[] rbonds = me.getValue();
+            MolBond b = rbonds[0]; // sorted by ascending rank
+            int parity = b.getFlags() & MolBond.STEREO1_MASK;
+            
+            if (debug) {
+                logger.info("Stereocenter "+(m.indexOf(a)+1)
+                            +": lowest ranked neighbor "
+                            +(m.indexOf(b.getOtherAtom(a))+1)
+                            +" with "+getParityFlag (parity)
+                            +" parity; number of neighbors is "
+                            +rbonds.length);
+            }
+            
+            boolean reset = false;
+            if (parity == MolBond.UP || parity == MolBond.DOWN) {
+                // sweet.. not much left to do 
+                reset = true;
+            }
+            else {
+                MolBond pbond = null;
+                for (int k = 1; k < rbonds.length; ++k) {
+                    MolBond rb = rbonds[k];
+                    int p = rb.getFlags() & MolBond.STEREO1_MASK;
+                    if (p == MolBond.UP || p == MolBond.DOWN) {
+                        pbond = rb;
+                        break;
+                    }
+                }
+                
+                if (pbond == null) {
+                    logger.warning("There must be at least "
+                                   +"one parity at stereocenter!");
+                }
+                else {
+                    int np = countBondParity (b.getOtherAtom(a), 0);
+                    // the lowest ranked neighbor doesn't have any
+                    // parity so we check to see if it's possible 
+                    // to set it
+                    if (np == 0) { 
+                        if (a == b.getAtom2()) 
+                            // make sure it's pointing in the right 
+                            // direction
+                            b.swap();
+                        b.setFlags(pbond.getFlags() & MolBond.STEREO1_MASK, 
+                                   MolBond.STEREO1_MASK);
+                        reset = true;
+                    }
+                    else { 
+                        
+                    }
+                }
+            }
+            
+            if (reset) {
+                for (int k = 1; k < rbonds.length; ++k) {
+                    b = rbonds[k];
+                    // only reset the parity of bonds that point toward
+                    // the stereocenter
+                    if (b.getAtom1() == a) 
+                        b.setFlags(0, MolBond.STEREO1_MASK);
+                }
+            }
+        }
+
+        /*
+         * and finally adjust the wedge/hash based on the chirality
+         */
+        for (Map.Entry<MolAtom, Integer> me : chirality.entrySet()) {
+            int i = m.indexOf(me.getKey());
+            m.setChirality(i, me.getValue());
+        }
+
+        if (debug) {
+            logger.info(m.toFormat("mol"));
+            logger.info(m.toFormat("smiles:q"));
+        }
+    } // preprocessing
 
     static void cleanMolecule (int dim, DPoint3[] coords, Molecule mol) {
 	MolBond[] bonds = mol.getBondArray();
@@ -833,7 +1025,6 @@ public class LyChIStandardizer {
 	    }
 	}
 
-	//mol.partialClean(dim, fixed, null);
 	mol.clean(dim, null);
 	for (int i = 0; i < bonds.length; ++i) {
 	    int stereo = flags[i] & MolBond.STEREO_MASK;
@@ -910,8 +1101,11 @@ public class LyChIStandardizer {
 	}
 
 	mol.expandSgroups();
-	makeHydrogensImplicit (mol);
-	//mol.aromatize();
+
+        /*
+         * standardize on explicit Hs and bond parities
+         */
+	preprocessing (mol);
 
 	MolAtom[] atoms = mol.getAtomArray();
 
@@ -925,22 +1119,23 @@ public class LyChIStandardizer {
 	     * make sure no attachments; they can turn off chiral flag
 	     */
 	    atoms[i].setAttach(0);
-
-	    if (atoms[i].getAtno() == 7) {
-		int c = mol.getChirality(i);
-		if (c == MolAtom.CHIRALITY_R || c == MolAtom.CHIRALITY_S) {
-		    logger.warning("** Removing stereocenter defined "
-				   +"for N atom at "+(i+1));
-		}
-		// for N, we make sure it doesn't have a stereocenter
-		//  because of inversion?
-		mol.setChirality(i, 0);
-	    }
-
 	    aflags[i] = atoms[i].getFlags();
 	    chiral[i] = mol.getChirality(i);
+
+	    if (atoms[i].getAtno() == 7
+                && (chiral[i] == MolAtom.CHIRALITY_R 
+                    || chiral[i] == MolAtom.CHIRALITY_S)) {
+                logger.warning("** Removing "+getChiralFlag (chiral[i])
+                               +" stereocenter defined "
+                               +"for N atom at "+(i+1));
+                
+                // for N, we make sure it doesn't have a stereocenter
+                //  because of inversion?
+                mol.setChirality(i, 0);
+	    }
+
 	    if (debug) {
-		System.err.println
+                logger.info
 		    ("Atom "+(i+1)+": "+atoms[i].getSymbol()+" chiral="
 		     +chiral[i] + " flags="+aflags[i]
 		     +" parity="+(aflags[i] & MolAtom.PARITY_MASK)
@@ -969,15 +1164,7 @@ public class LyChIStandardizer {
 
 	int dim = mol.getDim();
 	if (debug) {
-	    logger.info("** Molecule has dimension "+dim);
-	}
-
-	if (dim < 2) {
-	    mol.clean(2, null);
-	    if (debug) {
-		logger.info("** Cleaning molecule to dimension 2");
-	    }
-	    dim = 2;
+	    logger.info("++ Molecule has dimension "+dim);
 	}
 
 	DPoint3[] coords = new DPoint3[atoms.length];
@@ -986,8 +1173,9 @@ public class LyChIStandardizer {
 	}
 
 	if (debug) {
-	    logger.info("** Molecule has "+stereocenters+" stereocenter(s)!");
+	    logger.info("++ Molecule has "+stereocenters+" stereocenter(s)!");
 	}
+
 	if (stereocenters > 0) {
 	    // count bond parity
 	    int parity = 0;
@@ -999,7 +1187,7 @@ public class LyChIStandardizer {
 	    }
 	    
 	    if (debug) {
-		logger.info("** Molecule has "+parity+" parity bond(s)!");
+		logger.info("++ Molecule has "+parity+" parity bond(s)!");
 	    }
 	    
 	    if (parity == 0 && dim >= 2) {
@@ -1012,28 +1200,10 @@ public class LyChIStandardizer {
 	for (MolBond b : mol.getBondArray()) {
 	    int ai = mol.indexOf(b.getAtom1());
 	    int aj = mol.indexOf(b.getAtom2());
-	    bflags[ai][aj] = bflags[aj][ai] = b.getFlags();
+	    bflags[ai][aj] = b.getFlags();
+            bflags[aj][ai] = -1;
 	}
 
-	// this hack is the only way to clear of whatever baggage that
-	//  was carried around in the input molecule.. sigh!
-	try {
-	    String smiles = mol.toFormat("smiles:q");
-	    if (debug) {
-		System.err.println("input: 0:" + smiles 
-				   + " 1:"  + mol.toFormat("smiles:q") 
-				   + " 2:"+origmol.toFormat("smiles:q"));
-	    }
-	    
-	    //ChemUtil.canonicalSMILES (mol, mol, true);
-	}
-	catch (Exception ex) {
-	    logger.log(Level.WARNING, "** Input structure " + name
-		       + " contains unknown features; "
-		       + "no standardization is performed!");
-	    return false;
-	}
-	    
 	/*disconnectMetals (mol);*/
 	
 	if (debug) {
@@ -1067,28 +1237,10 @@ public class LyChIStandardizer {
 			       +"\n"+mol.toFormat("mol"));
 	}
 
-	/*
-	// neutralize
-	protonate (mol);
-	if (debug) {
-	System.err.println("neutralize: " + ChemUtil.canonicalSMILES (mol));
-	}
-	*/
-
-	// perform basic depronation... this needs some rework to handle
-	//  more general cases!
-	/*
-	  deprotonate (mol);
-	  if (debug) {
-	  System.err.println("deprotonate: " + ChemUtil.canonicalSMILES (mol) 
-	  + " " + mol.toFormat("smiles:q"));
-	  }
-	*/
-
 	frags = mol.convertToFrags();
 
 	// vector containing salts
-	Vector<Molecule> salts = new Vector<Molecule>();
+	List<Molecule> salts = new ArrayList<Molecule>();
 
 	SaltIdentifier saltId = SaltIdentifier.getInstance();
 
@@ -1310,7 +1462,8 @@ public class LyChIStandardizer {
 	}
 
 	if (debug) {
-	    System.err.println("Postprocessing: " + ChemUtil.canonicalSMILES (mol)
+	    System.err.println("Postprocessing: " 
+                               +ChemUtil.canonicalSMILES (mol)
 			       + " "+mol.toFormat("smiles:q")
 			       +"\n"+mol.toFormat("mol"));
 	}
@@ -1349,19 +1502,6 @@ public class LyChIStandardizer {
 	fixAtomMapping (neighbors, mol);
 	atoms = mol.getAtomArray();
 
-	// now restore the mapping if any...
-	if (coords != null) {
-	    for (MolAtom a : mol.getAtomArray()) {
-		int i = a.getAtomMap() - 1;
-		if (i >= 0 && i < coords.length) { 
-		    a.setXYZ(coords[i].x, coords[i].y, coords[i].z);
-		}
-	    }
-
-            if (dim > 0)
-                mol.setDim(dim);
-	}
-
 	// restore bond flags
 	for (MolBond b : mol.getBondArray()) {
 	    int i = b.getAtom1().getAtomMap() - 1;
@@ -1369,7 +1509,13 @@ public class LyChIStandardizer {
 	    if (i >= 0 && j >= 0 
 		&& i < bflags.length && j < bflags[i].length) {
 		int f = bflags[i][j];
-		if ((f & MolBond.TYPE_MASK) == b.getType()) {
+                if (f < 0) {
+                    b.swap();
+                    f = bflags[j][i];
+                }
+
+                int type = f & MolBond.TYPE_MASK; // original type
+		if (type == b.getType()) {
 		    b.setFlags(f & MolBond.STEREO_MASK,
 			       MolBond.STEREO_MASK);
 		    b.setFlags(f & MolBond.TOPOLOGY_MASK, 
@@ -1378,12 +1524,15 @@ public class LyChIStandardizer {
 			       MolBond.REACTING_CENTER_MASK);
 		}
 	    
-                if (b.getType() == 2) {
+                if (b.getType() == 2 
+                    && !(b.getAtom1().isTerminalAtom() 
+                         || b.getAtom2().isTerminalAtom())
+                    && !mol.isRingBond(mol.indexOf(b))) {
                     int s = b.calcStereo2();
                     switch (s) {
                     case MolBond.CIS:
                     case MolBond.TRANS:
-                        if ((f & MolBond.TYPE_MASK) != 2) {
+                        if (type != 2) {
                             // unspecified due to tautomer
                             b.setFlags(MolBond.CIS|MolBond.TRANS, 
                                        MolBond.CTUMASK);
@@ -1409,17 +1558,35 @@ public class LyChIStandardizer {
 	}
 	bflags = null;
 
+        if (debug) {
+	    System.err.println("Restore Bond Flags: " 
+                               + ChemUtil.canonicalSMILES (mol)
+			       +"\n"+mol.toFormat("mol"));
+        }
+
         // only override stereo if the input molecule has coordinates
-	adjustStereo (dim >= 2, chiral, mol);
+	/*
+          adjustStereo (dim >= 2, chiral, mol);
 	if (debug) {
 	    System.err.println("Stereo Adjustment: " 
                                + ChemUtil.canonicalSMILES (mol)
 			       //+ " "+mol.toFormat("smiles:q"));
 			       +"\n"+mol.toFormat("mol"));
 	}
+        */
 
 	// and finally reset atom map (if any)
-	cleanUp (aflags, mol);
+	//cleanUp (aflags, mol);
+        for (int i = 0; i < atoms.length; ++i) {
+	    int j = atoms[i].getAtomMap() - 1;
+	    if (j >= 0 && j < aflags.length) { 
+                atoms[i].setXYZ(coords[j].x, coords[j].y, coords[j].z);
+		atoms[i].setFlags(aflags[j]);
+	    }
+        }
+        // this is important as it recalculate the stereocenters
+        mol.setDim(dim);
+
 	if (debug) {
 	    System.err.println("CleanUp: " + ChemUtil.canonicalSMILES (mol)
 			       //+ " "+mol.toFormat("smiles:q"));
@@ -1473,6 +1640,12 @@ public class LyChIStandardizer {
         if (flag == MolAtom.CHIRALITY_R) return "R";
         if (flag == MolAtom.CHIRALITY_S) return "S";
         if (flag == 0) return "R/S";
+        return "?";
+    }
+
+    static String getParityFlag (int parity) {
+        if (parity == MolBond.UP) return "UP";
+        if (parity == MolBond.DOWN) return "DOWN";
         return "?";
     }
 
@@ -2232,7 +2405,7 @@ public class LyChIStandardizer {
 	}
 
 	Molecule mol = null;
-	String molstr = ChemUtil.canonicalSMILES (input);
+	String molstr = ChemUtil.canonicalSMILES(input);
 	try {
 	    MolHandler mh = new MolHandler (molstr);
 	    mol = mh.getMolecule();
@@ -2244,11 +2417,17 @@ public class LyChIStandardizer {
 	}
 
 	Molecule m0 = mol.cloneMolecule();
-
 	m0.expandSgroups();
 	m0.hydrogenize(false);
 	// make sure H isotopes are suppressed
 	m0.implicitizeHydrogens(MolAtom.ALL_H);
+
+        // remove any leftover H that didn't get removed 
+        // above
+        for (MolAtom a : m0.getAtomArray()) {
+            if (a.getAtno() == 1)
+                m0.removeNode(a);
+        }
 
 	Molecule m1 = m0.cloneMolecule();
 	int[] atno = new int[m0.getAtomCount()];

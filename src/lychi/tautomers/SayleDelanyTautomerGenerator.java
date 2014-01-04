@@ -26,14 +26,14 @@ import chemaxon.util.MolHandler;
 import lychi.TautomerGenerator;
 import lychi.util.ChemUtil;
 
-/* *
+/**
  * tautomer code based on Roger Sayle and Jack Delany
  */
 public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     private static boolean debug = false;
     static {
 	try {
-	    debug = Boolean.getBoolean("tautomer.debug");
+	    debug = Boolean.getBoolean("lychi-tautomer.debug");
 	}
 	catch (Exception ex) {
 	}
@@ -199,12 +199,17 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	     * state of the input molecule can be quite screwed up.
 	     * This allows us to start with a clean slate molecule.
 	     */
-            /*
-	    smiles = m.toFormat("smiles:u");
-	    if (m.getDim() < 2) {
-                m.clean(2, null);
-	    }
-            */
+            Map<Integer, Integer> chiral = new HashMap<Integer, Integer>();
+            atoms = m.getAtomArray();
+            //logger.info("Tautomer: ++ "+m.toFormat("smiles:q"));
+            for (int i = 0; i < atoms.length; ++i) {
+                int k = atoms[i].getAtomMap();
+                int c = m.getChirality(i);
+                if (c == MolAtom.CHIRALITY_R || c == MolAtom.CHIRALITY_S) {
+                    //logger.info(k+": "+c);
+                    chiral.put(k, c);
+                }
+            }
 
 	    smiles = m.toFormat("mol");
 	    if (debug) {
@@ -213,6 +218,17 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 
 	    MolImporter.importMol(smiles, m);
 	    m.dearomatize();
+
+            // restore the chirality flags
+            atoms = m.getAtomArray();
+            for (int i = 0; i < atoms.length; ++i) {
+                Integer c = chiral.get(atoms[i].getAtomMap());
+                if (c != null) {
+                    //logger.info(atoms[i].getAtomMap()+": "+c);
+                    m.setChirality(i, c);
+                }
+            }
+            //logger.info("Tautomer: -- "+m.toFormat("smiles:q"));
 
 	    if (!isKekulized (m)) {
 		// can't kekulized this molecule, so revert back to the 
@@ -1244,43 +1260,11 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     protected boolean generateTautomer () {
 	if (tautomers.size() < maxsize) {
 	    mol.valenceCheck();
-
 	    adjustBondAnnotations ();
-
-	    /*
-	      if (mol.hasValenceError()) {
-	      System.err.println("** tautomer contains bad valence: " 
-	      + mol.toFormat("smiles:u-a"));
-	      }
-	    */
-
-
-	    /*
-	      System.err.println("** tautotmer " + smi + " " 
-	      + scoreTautomer (mol));
-	    */
-
-	    Molecule tau = mol.cloneMolecule(); /*new Molecule ();
-	    if (!kekulize (tau, mol)) { 
-		// now restore the atom mapping
-		for (int i = 0; i < atoms.length; ++i) {
-		    atoms[i].setAtomMap(amaps[i]);
-		}
-
-		// if we can't kekulize, then use it as-is
-		MolStandardizer.canonicalSMILES(tau, mol, true);
-
-		// undo atom mapping
-		for (int i = 0; i < atoms.length; ++i) {
-		    atoms[i].setAtomMap(0);
-		}
-	    }
-	    else*/ {
-		
-		for (int i = 0; i < atoms.length; ++i) {
-		    //tau.getAtom(i).setAtomMap(amaps[i]);
-		}
-	    }
+	    Molecule tau = mol.cloneMolecule(); 
+            //for (int i = 0; i < atoms.length; ++i) {
+                //tau.getAtom(i).setAtomMap(amaps[i]);
+            //}
 
 	    if (debug) {
 		logger.info("Tautomer generated: "+tau.toFormat("smiles:q"));

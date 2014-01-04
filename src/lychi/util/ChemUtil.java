@@ -808,6 +808,94 @@ public class ChemUtil {
 	return smiles;
     }
 
+    public static boolean clean (MolAtom... atoms) {
+        Set<MolAtom> set = new HashSet<MolAtom>();
+        Molecule parent = null;
+        for (MolAtom a : atoms) {
+            if (parent == null)
+                parent = (Molecule)a.getParent();
+            else if (parent != a.getParent())
+                throw new IllegalArgumentException
+                    ("Atoms not from the same molecule!");
+            else {
+                set.add(a);
+            }
+        }
+
+        int[] fixed = new int[parent.getAtomCount() - set.size()];
+        int k = 0;
+        for (MolAtom a : parent.getAtomArray()) {
+            if (!set.contains(a)) {
+                fixed[k++] = parent.indexOf(a);
+            }
+        }
+
+        // layout the hydrogens
+        return parent.partialClean(2, fixed, null);
+    }
+
+    /**
+     * 2d layout based on the local neighborhood; this assumes that
+     * all neighbors of the given atom already have coordinates.
+     */
+    public static void localLayout (MolAtom... atoms) {
+        for (MolAtom a : atoms) {
+            Molecule m = (Molecule)a.getParent();
+            int[] rank = new int[m.getAtomCount()];
+            m.getGrinv(rank);
+
+            MolBond bond = a.getBond(0);
+            MolAtom xa = bond.getOtherAtom(a);
+            // find the neighboring with the largest rank and
+            // generate the coordinate opposite of it
+            int maxrank = -1;
+            MolAtom maxatom = null;
+            for (int k = 0; k < xa.getBondCount(); ++k) {
+                MolBond b = xa.getBond(k);
+                if (b != bond) {
+                    MolAtom na = b.getOtherAtom(xa);
+                    int r = rank[m.indexOf(na)];
+                    if (r > maxrank) {
+                        maxatom = na;
+                        maxrank = r;
+                    }
+                }
+            }
+            
+            if (maxatom != null) {
+                double x = maxatom.getX() - xa.getX();
+                double y = maxatom.getY() - xa.getY();
+                double theta = 0;
+                if (Math.abs(x) > 0.01) {
+                    theta = Math.atan(y/x);
+                }
+                else if (y < 0.) {
+                    theta = -Math.PI/2;
+                }
+                else if (y > 0.) {
+                    theta = Math.PI/2;
+                }
+                /*
+                logger.info("Atom "+(m.indexOf(a)+1)
+                            +" theta = "+Math.toDegrees(theta));
+                */
+
+                theta += Math.PI/6;
+                double cos = Math.cos(theta);
+                double sin = Math.sin(theta);
+                a.setX(xa.getX()+1.54*cos);
+                a.setY(xa.getY()+1.54*sin);
+
+                /*
+                logger.info("Atom "+(m.indexOf(a)+1)+" theta = "
+                            +theta+" ("+Math.toDegrees(theta)+") rank = "
+                            +maxrank+" atom "+(m.indexOf(maxatom)+1)
+                            +" x="+a.getX()+" y="+a.getY());
+                */
+            }
+        }
+    }
+
     private ChemUtil () {
     }
 }
