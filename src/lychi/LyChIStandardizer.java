@@ -2526,7 +2526,7 @@ public class LyChIStandardizer {
             try {
                 if (!mi.read(mol))
                     break;
-
+                mol=inputStandardize(mol);
                 String name = mol.getName();
                 if (name != null && name.length() > 0) {
                 }
@@ -2606,9 +2606,32 @@ public class LyChIStandardizer {
 	mi.close();
     }
 
+    /**
+     * This is a higher-level fix for specific format/pseudo-atom problems.
+     * 
+     * Right now, this does the following:
+     * 		"H+"[MDL] -> "H+"[Real charged atom]
+     * 
+     *   
+     * @param m input molecule
+     * @return Molecule with simple format standardized
+     */
+    public static Molecule inputStandardize(Molecule m){
+    	for(MolAtom ma : m.getAtomArray()){
+    		if(ma.isPseudo() || ma.isQuery()){
+    			if("H^{+} ".equals(ma.getSymbol())){
+    				ma.setFlags(0);
+    				ma.setAtno(1);
+    				ma.setCharge(1);
+    			}
+    		}
+    	}
+    	return m;
+    }
+    
+    
     public static void main(String[] argv) throws Exception {
 	String tag = null;
-
 	List<String> input = new ArrayList<String>();
 	for (int i = 0; i < argv.length; ++i) {
 	    if (argv[i].startsWith("tag=")) {
