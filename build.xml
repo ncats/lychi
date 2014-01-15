@@ -9,6 +9,7 @@
   <property name="src" value="src"/>
   <property name="version" value="0.1"/>
   <property name="jar" value="lychi-v${version}.jar"/>
+  <mkdir dir="${weblib}"/>
 
   <path id="compile.classpath">
     <fileset dir="${lib}">
