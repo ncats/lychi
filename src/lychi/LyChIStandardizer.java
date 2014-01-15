@@ -2438,6 +2438,7 @@ public class LyChIStandardizer {
 	    a.setRadical(0);
 	    a.setCharge(0);
 	    a.setFlags(0);
+            a.setMassno(0);
 	}
 	for (MolBond b : m0.getBondArray()) {
 	    b.setFlags(0);
@@ -2465,7 +2466,7 @@ public class LyChIStandardizer {
 
 	// level2: topology+atom label+bond order
         sb = new StringBuilder ();
-	for (AtomIterator ai =new AtomIterator (m1); ai.hasNext(); ) {
+	for (AtomIterator ai =new AtomIterator (m1, rank); ai.hasNext(); ) {
 	    MolAtom a = ai.next();
 	    sb.append(a.getSymbol()+a.getImplicitHcount());
 	}
