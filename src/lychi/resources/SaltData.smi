@@ -216,7 +216,8 @@ CC12CCC(CC1)(C=C2)C([O-])=O	4-methylbicyclo[2,2,2]oct-2-ene-1-carboxylate
 CN(C)CCC([O-])=O	N,N-dimethyl-beta-alaninate
 OCCNCCO	diethanolamine
 CCCCCCCCCCCCCCCCCCOP(O)(O)=O	octadecyl hydrogen phosphate
-NCCN	ethylenediamine
+NCCN	ethylene diamine
+OCCO    ethylene glyco
 [O-]C(=O)CN(CCN(CC([O-])=O)CC([O-])=O)CC([O-])=O	ethylenediaminetetraacetate
 [O-]S(=O)(=O)CCS([O-])(=O)=O	1,2-ethanedisulfonate
 CCCCCCC([O-])=O	heptanoate
@@ -262,3 +263,309 @@ Cl	hydrochloride
 [Ca+]	
 [Ba+]
 [O]	water
+## Solvent from UNM
+S=C=S   carbon disulfide
+CC1CCCCC1       methylcyclohexane
+CC(=O)CC(C)=O   acetylacetone
+C(=O)N(C)C      dimethylformamide
+C(=O)N  formamide
+CS(C)=O dimethyl sulfoxide
+C1OCCC1 tetrahydrofuran
+c1ccoc1 furan
+CC(=O)OCC       ethyl acetate
+CCO     ethanol
+CC(C)=O acetone
+CC#N    acetonitrile
+CC1OC(=O)OC1    propylene carbonate
+C-O     methanol
+O1CCOCC1        dioxane
+c1ccccc1        benzene
+C1CCCCC1        cyclohexane
+CCCCC   pentane
+CCCCCC  hexane
+CCCCCCC heptane
+C1CCCCCC1       cycloheptane
+CCCCCCCC        octane
+C[Cl]    chloromethane
+Cc1ccccc1C      xylene
+c1(C)c(C)cccc1  o-xylene
+c1(C)ccc(C)cc1  p-xylene
+c1(C)cc(C)ccc1  m-xylene
+ClC(Cl)Cl       chloroform
+Cc1ccccc1       toluene
+CCOCC   diethyl ether
+ClCCl   methylene chloride
+CC(O)C  isopropanol
+CC(C)OC(C)C     isopropyl ether
+CCCO    propanol
+CCCCO   butanol
+CC(C)CCO        isoamyl alcohol
+CC(C)(C)O       tert-Butyl alcohol
+CC(C)CC(=O)C    methyl isobutyl ketone
+CCC(=O)C        butanone
+CC(O)CC sec-butanol
+CCC(=O)CC       diethyl ketone
+CCCCCCCCO       octanol
+COCCOC  dimethoxyethane
+CCCCOC(=O)C     butyl acetate
+CCCCCl  chlorobutane
+O=P(N(C)C)(N(C)C)N(C)C  hexamethylphosphoramde
+CCOCCOCCOCC     2-ethoxyethyl ether
+CN(C)C(=O)C     dimethylacetamide
+COCCOCCOC       diethylene glycol dimethyl ether
+OCCOC   methyl glycol
+CC(=O)OCCOC     2-methoxyethyl acetate
+c1ccccc1C#N     benzonitrile
+CN1C(=O)CCC1    1-methyl-2-pyrrolidinone
+CC(=O)OC(=O)C   acetyl acetate
+c1ccccc1Cl      chlorobenzene
+OCCO    ethylene glycol
+OCCOCCO diethylene glycol
+ClCCCl  ethylene dichloride
+OCC(O)CO        glycerin
+c1(Cl)c(Cl)cccc1        dichlorobenzene
+FC(F)(F)CO      2,2,2-trifluoroethanol
+FC(Cl)(F)C(F)(Cl)Cl     trichlorotrifluoroethane
+ClC(Cl)(Cl)Cl   carbon tetrachloride
+ClC(Cl)=C(Cl)Cl tetrachloroethylene
+CC(=O)OC(C)(C)C tert-butylacetate
+## salt from unm
+O=P(=O)O metaphosphate (correct form is trimeric)
+P(F)(F)(F)(F)(F)F       hexafluoro
+[Sb](F)(F)(F)(F)(F)F       hexafluoro
+S(F)(F)(F)(F)(F)F       hexafluoro
+[Se](F)(F)(F)(F)(F)F       hexafluoro
+[As](F)(F)(F)(F)(F)F       hexafluoro
+[Si](F)(F)(F)(F)(F)F       hexafluoro
+[OH1-]  hydroxide
+C(=O)O   formate
+OC(=O)c1ccnc(O)c1        2-hydroxyisonicotinate
+c1n[nH]c[nH]1   1,2,4-triazole
+Oc1cncc(c1)C(O)=O        5-hydroxynicotinic
+OC(=O)c1cncc(Br)c1       5-bromonicotinate
+OC(=O)c1cc(ccc1Cl)[N+](=O)([O-])        2-chloro-5-nitrobenzoate
+Oc1c(Br)c2ccccc2cc1C(O)=O        4-bromo-3-hydroxy-2-naphthoate
+OC(C(O)C(O)C(O)=O)C(O)C(O)=O      mucate
+Nc1ncc[nH]1  2-imidazoleamine
+CCCC[N+](CCCC)(CCCC)CCCC        tetrabutylamine
+NCc1ccccc1   phenylmethanamine
+OC(O)=C(O)C(=O)C(O)=O    dihydroxyfumarate_1
+OC(C(O)=O)C(=O)C(O)=O     dihydroxyfumarate_2
+OCC(O)C(O)C(O)C(O)C(O)C(O)=O     heptagluconate
+OS(=O)(=O)c1ccc(Br)cc1   bromobenzenesulfonate
+FC(F)(F)S(=O)(=O)O       triflate
+CCCCN        butylamine
+CC(N)c1ccccc1        1-phenylethylamine
+N1CCNHCC1  piperazine
+OC(=O)C(Cl)c1ccccc1      chlorophenylacetate
+CC(C)CC(NC=O)C(O)=O      N-Formyl-leucine
+NO  hydroxylamine
+CN(C)C       trimethylamine
+N1CCCCC1     piperidine
+NN  hydrazinium
+NCCc1ccccc1  phenethylammonium
+Cc1ccc(N)cc1 p-tolylamine
+Nc1ccccc1    aniline
+N(c1ccccc1)c1ccccc1  diphenylamine
+c1ccc(cc1)B(c1ccccc1)(c1ccccc1)c1ccccc1  tetraphenylborate
+OC(=O)C1CCCN1    proline
+COS(=O)(=O)O     methyl sulfate
+CN1C(=O)N(C(O)=O)c2nc(Cl)[nH]c2C1=O      8-chlorotheophyllinate
+c1ccccn1       pyridine
+CNC  dimethylamine
+O=N-[O-]        nitrite
+O=N-O-[H]       nitrous acid
+O=[Cl](=O)(=O)O     perhalogenate salts
+O=[Br](=O)(=O)O     perhalogenate salts
+O=I(=O)(=O)O     perhalogenate salts
+O=[Cl](=O)O chlorate and analog salts
+O=[Br](=O)O chlorate and analog salts
+O=I(=O)O chlorate and analog salts
+O=[Cl]O     chlorite and analog salts
+O=[Br]O     chlorite and analog salts
+O=IO     chlorite and analog salts
+[Cl]O       hypochlorite and analog salts
+[Br]O       hypochlorite and analog salts
+IO       hypochlorite and analog salts
+FB(F)(F)F        tetrafluoroborate
+O=S(=O)(O)O  sulfate/selenate
+O=[Se](=O)(O)O  sulfate/selenate
+O=S(O)O      sulfite/selenite
+O=[Se](O)O      sulfite/selenite
+S=S(=O)(O)O       thiosulfate
+S-S(=O)O     thiosulfites
+S=S(=O)O     thiosulfites
+OS(=O)OS(=O)O     metabisulfite
+O=C=N cyanate
+O-C#N cyanate
+N#C      cyanide
+[O-]-[N+]#[C-]  fulminate
+[S-]-C#N        thiocyanate
+OC(=O)c1cc2ccccc2c(Cc2c(O)c(cc3ccccc23)C(O)=O)c1O pamoate
+OC(=O)CN(CCN(CC(O)=O)CC(O)=O)CC(O)=O        edetate
+OC(CC(O)=O)(CC(O)=O)C(O)=O citrate
+OC(=O)CCCCC(O)=O  adipate
+Cc1ccc(cc1)S(=O)(=O)Oc1ccc(O)c(c1)S(O)(=O)=O     sultosylate
+OC(=O)C(-[OH1])C(-[OH1])C(=O)O    tartrate
+CC(=O)O  acetate
+OC(=O)\C=C\C(O)=O fumarate
+OC(=O)\C=C/C(O)=O maleate
+OC(=O)C(O)=O      oxalate
+CCCCCCCCCCCCCCCC(O)=O    palmitate
+FC(F)(F)C(=O)O   trifluoroacetate
+CCN(CC)CC        triethylamine
+P(=O)(O)(O)O       phosphate
+P(=O)(O)O phosphite
+N(=O)(=O)O      nitrate
+CS(=O)(=O)O      mesylate
+OC(=O)CCC(=O)O    succinate
+Cc1ccc(cc1)S(O)(=O)=O    tosylate
+CC(O)C(=O)O      lactate
+OS(=O)(=O)CCS(=O)(=O)O    edisylate
+CCNCC    diethylamine
+SC#N      thiocyanate_1
+S=C=[N-]        thiocyanate_2
+ClC(Cl)C(=O)O    dichloroacetate
+OC(=O)C1=CC(=O)NC(=O)N1  orotate
+OCC(O)C(O)C(O)C(O)C(O)=O gluconate
+OC(=O)C(O)CC(=O)O       malate
+NCC(=O)O        glycinate
+CCCCCCCCCCCC(=O)O        laurate
+O=C1NC2=C(NC(=O)NC2=O)N1 urate
+CCS(=O)(=O)O     esylate
+OCCS(=O)(=O)O    isethionate
+OS(=O)(=O)c1ccc2ccccc2c1 napsylate
+OS(=O)(=O)c1ccccc1       besylate
+OC(=O)c1ccccc1   benzoate
+NC(CCC(O)=O)C(O)=O        glutamate
+NC(CC(O)=O)C(O)=O aspartate
+OCC(=O)O glycolate
+CCCCCC(O)=O      caproate
+CCCCCCCC(O)=O    octanoate
+CCCCCCCCCC(O)=O  decanoate
+CCCCCCCC\C=C/CCCCCCCC(O)=O       oleate
+CCCCCCCCCCCCCCCCCC(O)=O  stearate
+CNCC(O)C(O)C(O)C(O)CO    meglumine
+OCCN ethanolamine
+NC(CO)(CO)CO tromethamine
+C[N+](C)(C)CCO  choline
+C(CNCc1ccccc1)NCc1ccccc1  benzathine
+CCN(CC)CCOC(=O)c1ccc(N)cc1       procaine
+OC(=O)\C=C\c1ccccc1      cinamate
+OS(=O)(=O)NC1CCCCC1      cyclamate
+CCCCCCCCCCCCOS(O)(=O)=O  lauryl sulfate
+O[C@@H]([C@@H](O)[C@H](O)C(O)=O)[C@@H](O)C(O)=O   galactarate
+OC(=O)c1cc(O)ccc1O       gentisate
+OC[C@@H](O)[C@@H](O)[C@H](O)[C@@H](O)[C@@H](O)C(O)=O     gluceptate
+O[C@@H](C=O)[C@@H](O)[C@H](O)[C@H](O)C(O)=O      glucuronate
+OC(=O)CCC(=O)C(O)=O       oxoglutarate
+OC(=O)CNC(=O)c1ccccc1    hippurate
+OC(=O)CC(O)=O     malonate
+OC(C(O)=O)c1ccccc1       mandelate
+OS(=O)(=O)c1cccc2c(cccc12)S(O)(=O)=O      napadisylate
+OC(=O)c1ccc2ccccc2c1O    xinafoate
+Oc1cc2ccccc2cc1C(O)=O    hydroxynaphthoate
+OC(=O)c1cccnc1   nicotinate
+OC(=O)c1ccccc1O  salicylate
+Nc1ccc(C(O)=O)c(O)c1     p-aminosalicylate
+OC(=O)CCCCCCCCC(O)=O      sebacate
+OC(=O)CCCCCCCCC=C        undecylenate
+OCCN(C)C deanol
+OC(=O)[C@@H]1CCC(=O)N1   pidolate
+OC[C@@H](O)[C@@H](O[C@@H]1O[C@H](CO)[C@H](O)[C@H](O)[C@H]1O)[C@H](O)[C@@H](O)C(O)=O      lactobionate
+NC1CCCCC1        cyclohexylammonium
+O=C(O)O       carbonate
+O=CC(=O)O        glyoxylate
+OC(=O)C1CC=CCC1C(O)=O     tetrahydrophtalate
+OC(=O)c1cc(ccc1)C(O)=O    isophthalate
+OC(=O)c1ccccc1C(O)=O      phthalate
+OC(=O)c1ccncc1   isonicotinate
+OC(=O)CCC1CCCC1  cypionate
+CC(C)(C)C(=O)O   pivalate
+OC(=O)CCc1ccccc1 hydrocinnamate
+OS(=O)(=O)c1ccc(Cl)cc1   closylate
+C1CCC(CC1)NC1CCCCC1      dicyclohexylamine
+CC(=O)CCC(=O)O   levulinate
+NC(C)(C)C    erbumine
+CC(C)(CO)C(O)C(=O)NCCC(O)=O      pantothenate
+CC(C)(C)C(=O)O   trimethylacetate
+CC(=O)NCC(=O)O   aceturate
+CC(=O)Oc1ccccc1C(O)=O    acetylsalicylate
+CC(C)(C)c1cc(c2cc(cc(c2c1)S(O)(=O)=O)C(C)(C)C)S(O)(=O)=O  1,5-Naphthalenedisulfonate
+CN1C2=C(N=C(Cl)[NH1]2)C(=O)N(C)C1=O        teoclate_1
+CN1C2=C([NH1]C(Cl)=N2)C(=O)N(C)C1=O        teoclate_2
+CC(C(=O)O)C      isobutyrate
+CCN      ethylamine
+CCC(=O)O propionate
+CC(CCC(=O)O)C    isocaproate
+O=C1CC2C(C1(CC2)CS(=O)(=O)O)(C)C camphorsulfonate
+CCCCCCCCCCCCOS(=O)(=O)O  estolate
+OC(=O)CCC        butanoate
+CCCCC(=O)O       valerate
+CCCCCCC(=O)O     enanthate
+OC(=O)N  carbamate
+CCCCCCCCCCCCCCCCCCOP(=O)(O)O      stearylphosphate
+CCCCCCCCCCCCCCOP(=O)(O)O  tetradecyl hydrogen phosphate
+CCCCCCCCCCCCOS(=O)(=O)O  lauryl sulfate
+CCN1CCOCC1       ethylmorpholine
+CCNH11CCOCC1   morpholine
+CCOC(=O)O        etabonate
+CN(CCC(=O)O)C    dimethylaminopropionate
+NS(=O)(=O)O      sulfamate
+[N+](CCC)(CCC)(CCC)CCC  tetrapropylammonium
+COc1cc2c(cccc2)cc1C(O)=O 3-methoxy-2-naphthoate
+OC(=O)CC(=O)c1ccccc1O    salicyloylacetate
+OC(=O)c1ccc(cc1)S(O)(=O)=O        4-carboxybenzenesulfonate
+OC(=O)Cc1ccccn1  pyridylacetate
+OC(=O)CCC1CCCCC1 cyclohexanepropionate
+OCCN1CCCC1     epolamine
+OC(=O)c1cc(ccc1O)S(O)(=O)=O       sulfosalicylate
+OC(=O)c1cccc(O)c1O       dihydroxybenzoate
+C1(OC(=O)C(O)=C1O)C(O)CO ascorbate
+OC(=O)c1ccccc1[N+]([O-])=O    o-nitrobenzoate
+OC(=O)CCNCC      N-ethyl-beta-Alanine
+Oc1cc(Cl)c(Cl)cc1Cl      triclofenate
+CC(=O)N(C)C        dimethylacetamide
+OC(=O)CC(C)(C)C  tert-butylacetatic acid
+CC1=CC(=O)Oc2cc(OCC(O)=O)c(O)cc12        (6-hydroxy-4-methyl-2-oxo-2H-1-benzopyran-7-yl)oxy acetate
+CCC(C(=O)O)CC(=O)O        ethylsuccinate
+CCCC[C@@H]1CC[C@H](CC1)C(=O)O    trans-4-butylcyclohexanecarboxylate
+CN1C2=C(N(CCCS(O)(=O)=O)C=N2)C(=O)N(C)C1=O       teprosilate
+CN1C2=C(N(CCS(O)(=O)=O)C=N2)C(=O)N(C)C1=O        purine-7-ethanesulfonate
+N[C@@H](CCCNC(N)=N)C(O)=O        arginate
+NCCCCC(N)C(O)=O       lysinate
+CC(N)C(O)=O   alaninate
+OC(=O)CCCCCCC(=O)N(CCS(=O)(=O)(O))C suleptanate
+Oc1cc2OC(=O)C=C(CS(O)(=O)=O)c2cc1O       6,7-dihydroxy-4-(sulfomethyl)
+Oc1ccc(cc1)C(=O)c1c(cccc1)C(O)=O hibenzate
+Oc1ccc2ccccc2c1C(O)=O    2-hydroxy-1-naphthoate
+OC(=O)C(c1ccccc1)(c1ccccc1)c1ccccc1      trifenatate
+OC(=O)c1ccc(cc1)C(O)=O    terephthalate
+CC=CC=CC(O)=O    sorbate
+OCC(O)C(O)C(O)C(O)=O     xylonate
+OCC(O)COP(O)(O)=O alfoscerate
+CC(=O)NC(CCC(O)=O)C(O)=O  aceglumate
+Nc1ccc(C=Cc2ccc(N)cc2S(O)(=O)=O)c(c1)S(O)(=O)=O   amsonate
+CCCCC1CCC(CC1)C(O)=O     buciclate
+CC(C)(C)c1cc(c2cc(cc(c2c1)S(O)(=O)=O)C(C)(C)C)S(O)(=O)=O  bunapsylate
+CC1(C)C2CCC1(CS(O)(=O)=O)C(=O)C2 camsylate
+OC(=O)c1ccc(cc1)S(O)(=O)=O        carbesylate
+CC12CCC(CC1)(C=C2)C(O)=O cyclotate
+COc1ccc(C=C2C(Oc3ccc(OP(O)(O)=O)cc3C2=O)c2ccc(OC)cc2)cc1  crobefate
+CC1=CC(=O)Oc2cc(OCC(O)=O)c(O)cc12        cromacate
+Oc1cc2OC(=O)C=C(CS(O)(=O)=O)c2cc1O       cromesylate
+CN(C)CCC(O)=O    dapropate
+CC(C)(C)c1ccc2c(c(ccc2c1S(O)(=O)=O)C(C)(C)C)S(O)(=O)=O    dibudinate
+CC(C)(C)c1ccc2c(c(ccc2c1)C(C)(C)C)S(O)(=O)=O     dibunate
+OCCNCCO     diolamine
+CCOS(=O)(=O)O    ethylsulfate
+Oc1ccc(cc1-c1ccccc1)C(=O)c1ccccc1C(O)=O  fendizoate
+COc1cc(cc(OC)c1OC)C(O)=O megallate
+COc1c(cc2ccccc2c1Cc1c(OC)c(cc2ccccc12)C(O)=O)C(O)=O       metembonate
+C(C)(C)(C)CC(=O)O        ebutate
+OC(=O)c1cccs1    tenoate
+CN1C2N=CN(CCS(O)(=O)=O)C2C(=O)N(C)C1=O   tofesylate
+CCOCCOCCOCC(O)=O  troxundate
+CCCCCCCCCCC(O)=O undecanoate
+C=CCCCCCCCCC(O)=O        undecylenate
+

@@ -896,6 +896,30 @@ public class ChemUtil {
         }
     }
 
+    /**
+     * This is a higher-level fix for specific format/pseudo-atom problems.
+     * 
+     * Right now, this does the following:
+     * 		"H+"[MDL] -> "H+"[Real charged atom]
+     * 
+     *   
+     * @param m input molecule
+     * @return Molecule with simple format sanitized
+     */
+    public static Molecule sanitize (Molecule m){
+    	for (MolAtom ma : m.getAtomArray()){
+            if (ma.isPseudo() || ma.isQuery()) {
+                if("H^{+} ".equals(ma.getSymbol())){
+                    ma.setFlags(0);
+                    ma.setAtno(1);
+                    ma.setCharge(1);
+                }
+            }
+    	}
+    	return m;
+    }
+
+
     private ChemUtil () {
     }
 }

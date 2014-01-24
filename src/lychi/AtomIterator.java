@@ -55,20 +55,23 @@ public class AtomIterator implements ListIterator<MolAtom> {
 	setMolecule (mol, rank);
     }
 
-    public void setMolecule (MoleculeGraph mol, int[] rank) {
+    public void setMolecule (MoleculeGraph mol, int[] r) {
 	atoms = mol.getAtomArray();
 
 	IntPair[] ip = new IntPair[atoms.length];
+        int[] rank = new int[atoms.length]; // make a copy
 	for (int i = 0; i < ip.length; ++i) {
+            rank[i] = r[i];
 	    ip[i] = new IntPair (i, rank[i]);
 	}
 	Arrays.sort(ip);
+
         /*
         System.out.println(((Molecule)mol).toFormat("smiles:q"));
         for (IntPair i : ip) {
             System.out.println(i+": "+atoms[i.index].getSymbol());
         }
-	*/
+        */
 
 	index = new ArrayList<Integer>();
 	for (int i = 0; i < atoms.length; ++i) {
@@ -92,7 +95,11 @@ public class AtomIterator implements ListIterator<MolAtom> {
 		int j = mol.getNeighbor(pos, 0);
 		for (int i = 1; i < k; ++i) {
 		    int nb = mol.getNeighbor(pos, i);
-		    if (rank[nb]  < rank[j]) {
+                    if (rank[nb] == rank[j]) {
+                        if (nb < j)
+                            j = nb;
+                    }
+		    else if (rank[nb] < rank[j]) {
 			j = nb;
 		    }
 		}

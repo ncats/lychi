@@ -796,6 +796,8 @@ public class LyChIStandardizer {
      * complicated!
      */
     public static void preprocessing (final Molecule m) {
+        ChemUtil.sanitize(m);
+
         // suppress all hydrogens except for isotopes
         m.hydrogenize(false);
         m.implicitizeHydrogens(MolAtom.ALL_H & ~MolAtom.ISOTOPE_H);
@@ -1474,7 +1476,8 @@ public class LyChIStandardizer {
 	if (debug) {
 	    logger.info("Number of components: "+frags.length);
 	    for (Molecule f : frags) {
-		System.err.println("  "+f.toFormat("smiles:q"));
+                if (f != null)
+                    System.err.println("  "+f.toFormat("smiles:q"));
 	    }
 	}
 
@@ -2440,6 +2443,7 @@ public class LyChIStandardizer {
 	    a.setFlags(0);
             a.setMassno(0);
 	}
+
 	for (MolBond b : m0.getBondArray()) {
 	    b.setFlags(0);
 	    b.setType(1);
@@ -2454,7 +2458,7 @@ public class LyChIStandardizer {
         int[] rank = new int[atno.length];
         m0.getGrinv(rank);
         for (int i = 0; i < atno.length; ++i) {
-            rank[i] += atno[i]; // update rank to resolve symmetry
+            rank[i] *= atno[i]; // update rank to resolve symmetry
         }
 
         for (AtomIterator ai = new AtomIterator (m0, rank); 
@@ -2527,7 +2531,7 @@ public class LyChIStandardizer {
             try {
                 if (!mi.read(mol))
                     break;
-                mol=inputStandardize(mol);
+
                 String name = mol.getName();
                 if (name != null && name.length() > 0) {
                 }
@@ -2606,30 +2610,6 @@ public class LyChIStandardizer {
 	}
 	mi.close();
     }
-
-    /**
-     * This is a higher-level fix for specific format/pseudo-atom problems.
-     * 
-     * Right now, this does the following:
-     * 		"H+"[MDL] -> "H+"[Real charged atom]
-     * 
-     *   
-     * @param m input molecule
-     * @return Molecule with simple format standardized
-     */
-    public static Molecule inputStandardize(Molecule m){
-    	for(MolAtom ma : m.getAtomArray()){
-    		if(ma.isPseudo() || ma.isQuery()){
-    			if("H^{+} ".equals(ma.getSymbol())){
-    				ma.setFlags(0);
-    				ma.setAtno(1);
-    				ma.setCharge(1);
-    			}
-    		}
-    	}
-    	return m;
-    }
-    
     
     public static void main(String[] argv) throws Exception {
 	String tag = null;
