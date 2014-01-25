@@ -2319,7 +2319,8 @@ public class LyChIStandardizer {
 	if (pos > 0) {
 	    deprotonate (mol);
 	    if (debug) {
-		System.err.println("Deprotonate: " + ChemUtil.canonicalSMILES (mol) 
+		System.err.println("Deprotonate: " 
+                                   + ChemUtil.canonicalSMILES(mol) 
 				   + " " + mol.toFormat("smiles:q"));
 	    }
 
@@ -2487,7 +2488,6 @@ public class LyChIStandardizer {
                         "3: "+level3 + "\n");
 	}
 
-
         return hashChain45 (level0, level1, level2, level3);
     }
 
@@ -2573,6 +2573,8 @@ public class LyChIStandardizer {
 		}
 		else {
 		    if (msz.getFragmentCount() > 1) {
+                        os.println(ChemUtil.canonicalSMILES(mol) 
+                                   +"\t"+name+"\t"+hashKey (mol));
 			for (Molecule frag : msz.getFragments()) {
                             if (frag != null) {
                                 os.println(ChemUtil.canonicalSMILES(frag) 
