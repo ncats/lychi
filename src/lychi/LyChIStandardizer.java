@@ -860,6 +860,11 @@ public class LyChIStandardizer {
             else if (chiral != 0) {
                 m.setChirality(i, 0);
             }
+
+            int ch = a.getCharge();
+            if (ch < 0) {
+                a.setCharge(ch+1);
+            }
         } // endfor each atom
 
         /*
@@ -1526,11 +1531,10 @@ public class LyChIStandardizer {
 		    b.setFlags(f & MolBond.REACTING_CENTER_MASK,
 			       MolBond.REACTING_CENTER_MASK);
 		}
-	    
-                if (b.getType() == 2 
-                    && !(b.getAtom1().isTerminalAtom() 
-                         || b.getAtom2().isTerminalAtom())
-                    && !mol.isRingBond(mol.indexOf(b))) {
+                else if (b.getType() == 2 
+                         && !(b.getAtom1().isTerminalAtom() 
+                              || b.getAtom2().isTerminalAtom())
+                         && !mol.isRingBond(mol.indexOf(b))) {
                     int s = b.calcStereo2();
                     switch (s) {
                     case MolBond.CIS:
@@ -2329,7 +2333,39 @@ public class LyChIStandardizer {
 		net += a.getCharge();
 	    }
 
-	    if (net >= 0) {
+	    if (net > 0) {
+                // now see if we can add electrons to make this
+                // a zwitterion
+                MolAtom[] atoms = mol.getAtomArray();
+                int[] rank = new int[atoms.length];
+                mol.getGrinv(rank);
+
+                List<Integer> cand = new ArrayList<Integer>();
+                for (int i = 0; i < atoms.length; ++i) {
+                    int ch = atoms[i].getCharge();
+                    int hc = atoms[i].getImplicitHcount();
+                    if (atoms[i].getAtno() == 8 && hc > 0 && ch == 0) {
+                        cand.add(i);
+                    }
+                }
+
+                while (net > 0 && !cand.isEmpty()) {
+                    int minrank = Integer.MAX_VALUE;
+                    Integer atom = null;
+                    for (Integer a : cand) {
+                        if (rank[a] < minrank) {
+                            minrank = rank[a];
+                            atom = a;
+                        }
+                    }
+
+                    if (atom != null) {
+                        cand.remove(atom);
+                        atoms[atom].setCharge(-1);
+                        --net;
+                    }
+                }
+
 		neg = 0; // leave the negative charges unchanged
 	    }
 	}
@@ -2349,6 +2385,11 @@ public class LyChIStandardizer {
 	     */
 	    try {
 		String smiles = mol.toFormat("cxsmiles:u");
+                if (debug) {
+                    logger.log(Level.INFO, "Before final molecule cleaning: "
+                               +smiles);
+                }
+
 		Molecule newmol = MolImporter.importMol(smiles);
 		newmol.dearomatize();
 
@@ -2523,7 +2564,11 @@ public class LyChIStandardizer {
 	throws Exception {
 	MolImporter mi = new MolImporter (is);
 
-	TautomerGenerator tg = new SayleDelanyTautomerGenerator ();
+	TautomerGenerator tg = 
+            // new NCGCTautomerGenerator ()
+            new SayleDelanyTautomerGenerator 
+            // hanlding keto-enol... might be too slow
+            (1001, SayleDelanyTautomerGenerator.FLAG_ALL);
 	LyChIStandardizer msz = new LyChIStandardizer (tg);
 	msz.removeSaltOrSolvent(true);
 
@@ -2554,16 +2599,8 @@ public class LyChIStandardizer {
                                        + " has valence error!");
                 }
                 
-		/*		
-		  analyzer.setMolecule(mol);
-		  double before = analyzer.exactMass();
-		*/
 		int dim = mol.getDim();
 		msz.standardize(mol);
-		/*
-		  analyzer.setMolecule(m);
-		  double after = analyzer.exactMass();
-		*/
 		
 		String smi = ChemUtil.canonicalSMILES (mol, true);
 		if (dim > 0) {
