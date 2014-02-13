@@ -1448,7 +1448,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     public static void main (String argv[]) throws Exception {
 
 	TautomerGenerator taugen = new SayleDelanyTautomerGenerator 
-	    (Integer.getInteger("maxtau",1001));
+	    (Integer.getInteger("maxtau",1001), FLAG_ALL);
 	//taugen.unset(FLAG_NOXIDE);
 	//taugen.set(FLAG_ALL);
 	//taugen.setTimeout(10000); // 10 seconds

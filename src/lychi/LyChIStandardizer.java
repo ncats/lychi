@@ -1417,6 +1417,7 @@ public class LyChIStandardizer {
 	    Arrays.sort(frags, new MolComparator ());
 	    
 	    StringBuilder fused = new StringBuilder ();
+            List<Molecule> newfrags = new ArrayList<Molecule>();
 	    for (int i = 0; i < frags.length; ++i) {
 		if (frags[i] != null && frags[i].getAtomCount() > 0) {
 		    //mol.fuse(frags[i]); // <- doesn't keep stereo
@@ -1427,6 +1428,7 @@ public class LyChIStandardizer {
 		    // can't use ChemUtil.canonicalSMILES here since we'll loose the
 		    //  atom mappings
 		    fused.append(frags[i].toFormat("smiles:q"));
+                    newfrags.add(frags[i]);
 		}
 	    }
 	    
@@ -1440,6 +1442,16 @@ public class LyChIStandardizer {
 			(Level.SEVERE, "Unable to import molecule: " + fused);
 		}
 	    }
+
+            frags = newfrags.toArray(new Molecule[0]);
+            if (frags.length == 1) {
+                if (mol instanceof RgMolecule) {
+                    ((RgMolecule)mol).setRoot(frags[0]);
+                }
+                else {
+                    frags[0].clonecopy(mol);
+                }
+            }
 
 	    // keep only unique fragments
             /*
@@ -2564,11 +2576,23 @@ public class LyChIStandardizer {
 	throws Exception {
 	MolImporter mi = new MolImporter (is);
 
+        /*
+         * java -Dketo-enol=true ... 
+         * to turn on keto-enol tautomerism
+         */
 	TautomerGenerator tg = 
             // new NCGCTautomerGenerator ()
-            new SayleDelanyTautomerGenerator 
+            new SayleDelanyTautomerGenerator (1001);
+        if (Boolean.getBoolean("keto-enol")) {
             // hanlding keto-enol... might be too slow
-            (1001, SayleDelanyTautomerGenerator.FLAG_ALL);
+            ((SayleDelanyTautomerGenerator)tg).set
+                (SayleDelanyTautomerGenerator.FLAG_ALL);
+            logger.info("## Keto-Enol tautomerism is on");
+        }
+        else {
+            logger.info("## Keto-Enol tautomerism is off");
+        }
+
 	LyChIStandardizer msz = new LyChIStandardizer (tg);
 	msz.removeSaltOrSolvent(true);
 
@@ -2609,8 +2633,9 @@ public class LyChIStandardizer {
 		    os.print(mol.toFormat("sdf"));
 		}
 		else {
+                    os.println("## fragments: "+msz.getFragmentCount());
 		    if (msz.getFragmentCount() > 1) {
-                        os.println(ChemUtil.canonicalSMILES(mol) 
+                        os.println(smi
                                    +"\t"+name+"\t"+hashKey (mol));
 			for (Molecule frag : msz.getFragments()) {
                             if (frag != null) {
@@ -2625,18 +2650,6 @@ public class LyChIStandardizer {
                                    + hashKey (mol)); 
                     }
 		}
-		/*
-		  Molecule[] f = msz.getFragments();
-		  if (f.length > 1) {
-		  for (int i = 0; i < f.length; ++i) {
-		  smi = ChemUtil.canonicalSMILES (f[i], true);
-		  os.println
-		  (smi + "\t" + name 
-		  + "\t" + hashKey (f[i])
-		  + "\tSaltOrSolvent="+isSaltOrSolvent (f[i]));
-		  }
-		  }
-		*/
             }
             catch (Exception ex) {
                 logger.log(Level.SEVERE, "** can't process molecule "
