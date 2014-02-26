@@ -1,4 +1,5 @@
 [NR1:1]1=[CX3!a:4]-[CX4!a:5]-[CX4!a:6]-[CX3!a:2]=[CX3!a:3]1>>[N:1]1-[C:4]=[C:5]-[C:6]-[C:2]=[C:3]1	normalize dihydropyridine
 [CX3!a;!$(C~[!#6!#1]):1]=[CX3!a:2]-!@[O,S;D1H1:3]>>[C:1]-[C:2]=[S,O;X1H0:3]	normalize (thio)enol to (thio)keto
 [#6X4:1]-[NX2!R:2]=[OX1:3]>>[#6X3:1]=[NX2!R:2]-[OH1:3]	normalize oxime
-
+[ND1H1:1]=!@[P:2](-[OD1H1:3])(-[OD1H1:4])-[OD1H1,OD2H0:5]>>[NH2:1]-[P:2](=[OH0:3])(-[O:4])-[O:5]	normalize phosphoramidic acid/esters
+#[OX1-:1]-!@[CD2H1]	normalize charged enol
