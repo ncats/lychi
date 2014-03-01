@@ -1,4 +1,7 @@
+#[CX3!R;!$(C~[!#6!#1]):1](=[OX1:2])-!@[OX1-:3]>>[C:1](=[O:2])-[OH1+0:3]	remove charge from carboxyl
 [NR1:1]1=[CX3!a:4]-[CX4!a:5]-[CX4!a:6]-[CX3!a:2]=[CX3!a:3]1>>[N:1]1-[C:4]=[C:5]-[C:6]-[C:2]=[C:3]1	normalize dihydropyridine
-[CX3!a;!$(C~[!#6!#1]):1]=[CX3!a:2]-!@[OD1H1,SD1H1,OD1-,SD1-:3]>>[C:1]-[C:2]=[O,S:3]	normalize (thio)enol to (thio)keto
+[O:1]=[N+:2](-!@[#6:4])-[OH1:3]>>[#6:4][N+:2](=[O:1])-[OH0-:3]	remove H from O in nitro
+[CX3!a;!$(C~[!#6!#1]):1]=[CX3!a:2]-!@[OD1-,SD1-:3]>>[C:1]-[C:2]=[OH1+0,SH1+0:3]	normalize charged (thio)enol to (thio)keto
+[CX3!a;!$(C~[!#6!#1]):1]=[CX3!a:2]-!@[OD1H1,SD1H1:3]>>[C:1]-[C:2]=[O,S:3]	normalize (thio)enol to (thio)keto
 [#6X4:1]-[NX2!R:2]=[OX1:3]>>[#6X3:1]=[NX2!R:2]-[OH1:3]	normalize oxime
 [ND1H1:1]=!@[P:2](-[OD1H1:3])(-[OD1H1:4])-[OD1H1,OD2H0:5]>>[NH2:1]-[P:2](=[OH0:3])(-[O:4])-[O:5]	normalize phosphoramidic acid/esters
