@@ -1,3 +1,5 @@
+# custom user normalization rules, comment lines start with #
+# remove/add/customize rules rules below to fit particular standardization
 [CX3!R;$(C=[O,S,N]):1](=[OX1,NX2,SX1:2])-!@[OX1-:3]>>[C:1](=[*:2])-[O+0:3]-[H]	neutralize carboxyl
 [NR1:1]1=[CX3!a:4]-[CX4!a:5]-[CX4!a:6]-[CX3!a:2]=[CX3!a:3]1>>[N:1]1-[C:4]=[C:5]-[C:6]-[C:2]=[C:3]1	normalize dihydropyridine
 [O:1]=[N+:2](-!@[#6:4])-[OH1:3]>>[#6:4][N+:2](=[O:1])-[O-:3]	remove H from O in nitro
@@ -5,7 +7,7 @@
 [CX3!a;!$(C~[!#6!#1]):1]=[CX3!a:2]-!@[OD1H1,SD1H1:3]>>[C:1]-[C:2]=[O,S:3]	normalize (thio)enol to (thio)keto
 [#6X4:1]-[NX2!R:2]=[OX1:3]>>[#6X3:1]=[NX2!R:2]-[OH1:3]	normalize oxime
 [ND1H1:1]=!@[P:2](-[OD1H1:3])(-[OD1H1:4])-[OD1H1,OD2H0:5]>>[NH2:1]-[P:2](=[OH0:3])(-[O:4])-[O:5]	normalize phosphoramidic acid/esters
-[CX3:7]1=[cR2:5]2[cR1:4][cR1:3][cR1:2][cR1:1][cR2:6]2=[CX3:8]1>>[CX3:7]1=[CX3:8]-[CR2:5]2=[CR1:4]-[CR1:3]=[CR1:2][CR1:1]=[CR2:6]12	normalize benzocyclobutadiene
+#[CX3:7]1=[cR2:5]2[cR1:4][cR1:3][cR1:2][cR1:1][cR2:6]2=[CX3:8]1>>[CX3:7]1=[CX3:8]-[CR2:5]2=[CR1:4]-[CR1:3]=[CR1:2][CR1:1]=[CR2:6]12	select most stable form of benzocyclobutadiene
 [#6:1]=!@[NX2:2]-!@[NH1X3:3]-!@[#6:4]>>[#6:1]-[N:2]=[NH0:3]-[#6:4]	normalize azo
 [#6:1]1=[#6:2][#6:3]2=[#6:4][N:5]=[N:6][#6:7]2=[N:8]1>>[#6:1]1[#6:2]=[#6:3]2[#6:4]=[N:5][N:6]=[#6:7]2[N:8]=1	normalize 3,4-pyrazolopyrrole
 ## this transform causes infinite loop in Lychi version of SMIRKS, works ok in OEChem, Daylight, and Indigo, JChem 6.1 is not producing the correct result
