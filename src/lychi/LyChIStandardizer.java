@@ -48,13 +48,17 @@ public class LyChIStandardizer {
      */
     public static final int VERSION = 0x10;
 
-    static private boolean debug = false;
+    static final private boolean DEBUG;
+    static final private boolean UNMEX = true; // apply UNM extra rules
     static {
+        boolean debug = false;
 	try {
-	    debug = Boolean.getBoolean("lychi-standardizer.debug");
+	    debug = Boolean.getBoolean("lychi-debug");
 	}
 	catch (Exception ex) {
+            ex.printStackTrace();
 	}
+        DEBUG = debug;
     }
 
 
@@ -157,42 +161,42 @@ public class LyChIStandardizer {
     private static final String EXTERNAL_TRANSFORM_RULES = "resources/transform_rules.smirks";
     
     private static final ThreadLocal<SMIRKS[]> EXTERNAL_NORMALIZER = 
-    		new ThreadLocal<SMIRKS[]> () {
-    			@Override
-    			protected SMIRKS[] initialValue () {
-    				BufferedReader reader = null;
-    				try {
-    					reader = new BufferedReader(new InputStreamReader(LyChIStandardizer.class.getResourceAsStream(EXTERNAL_TRANSFORM_RULES)));
-    					String line;
-    					List<String> transforms = new ArrayList<String>();
-    					while((line = reader.readLine()) != null) {
-    						if(line.startsWith("#")) {
-    							continue;
-    						}
-    						transforms.add(line.split("\\s+")[0]);
-    					}
-    					SMIRKS[] normalizer = new SMIRKS[transforms.size()];
-    					for (int i = 0; i < transforms.size(); ++i) {
-    						normalizer[i] = new SMIRKS (transforms.get(i));
-    					}
-    					return normalizer;
-    				}
-    				catch (Exception ex) {
-    					logger.log(Level.SEVERE, 
-    							"Can't create external normalized transforms", ex);
-    				} finally {
-    					if(reader != null) {
-    						try {
-								reader.close();
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								logger.log(Level.WARNING, e.getMessage());
-							}
-    					}
-    				}
-    				return null;
-    			}
-    		};
+        new ThreadLocal<SMIRKS[]> () {
+        @Override
+        protected SMIRKS[] initialValue () {
+            BufferedReader reader = null;
+            try {
+                reader = new BufferedReader(new InputStreamReader(LyChIStandardizer.class.getResourceAsStream(EXTERNAL_TRANSFORM_RULES)));
+                String line;
+                List<String> transforms = new ArrayList<String>();
+                while((line = reader.readLine()) != null) {
+                    if(line.startsWith("#")) {
+                        continue;
+                    }
+                    transforms.add(line.split("\\s+")[0]);
+                }
+                SMIRKS[] normalizer = new SMIRKS[transforms.size()];
+                for (int i = 0; i < transforms.size(); ++i) {
+                    normalizer[i] = new SMIRKS (transforms.get(i));
+                }
+                return normalizer;
+            }
+            catch (Exception ex) {
+                logger.log(Level.SEVERE, 
+                           "Can't create external normalized transforms", ex);
+            } finally {
+                if(reader != null) {
+                    try {
+                        reader.close();
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        logger.log(Level.WARNING, e.getMessage());
+                    }
+                }
+            }
+            return null;
+        }
+    };
 
     static class  MolComparator implements Comparator<Molecule> {
 	public int compare (Molecule m1, Molecule m2) {
@@ -357,7 +361,7 @@ public class LyChIStandardizer {
 	for (int i = 0; i < neutralizer.length; ++i) {
 	    SMIRKS rule = neutralizer[i];
 	    if (rule.transform(mol)) {
-		if (debug) {
+		if (DEBUG) {
 		    System.err.println("++ rule " + i + ": " + rule);
 		    System.err.println
 			("=> " + mol.toFormat("smiles:q"));
@@ -543,7 +547,7 @@ public class LyChIStandardizer {
 	    return ;
 	}
 
-	if (debug) {
+	if (DEBUG) {
 	    System.err.println
 		("** " + mol.getName() + " contains " + bonds.cardinality() 
 		 + " bogus aromatic bond(s)!");
@@ -562,7 +566,7 @@ public class LyChIStandardizer {
 		&& ElementData.checkValence
 		(a2.getAtno(), a2.getCharge(),
 		 a2.getValence()+1, a2.getImplicitHcount())) {
-		if (debug) {
+		if (DEBUG) {
 		    System.err.println("Bond "+(i+1)+":"+(mol.indexOf(a1)+1)
 				       +"-"+(mol.indexOf(a2)+1)
 				       +" requires adjustment");
@@ -628,7 +632,7 @@ public class LyChIStandardizer {
 		current[path[j]] = bary[path[j]].getType();
 	    }
 
-	    if (debug) {
+	    if (DEBUG) {
 		System.err.print("** path");
 		for (int j = 0; j < path.length; ++j) {
 		    MolBond b = bary[path[j]];
@@ -659,7 +663,7 @@ public class LyChIStandardizer {
 		}
 	    }
 
-	    if (debug) {
+	    if (DEBUG) {
 		MolAtom a1 = bary[i].getAtom1();
 		MolAtom a2 = bary[i].getAtom2();
 		int i1 = mol.indexOf(a1), i2 = mol.indexOf(a2);
@@ -673,7 +677,7 @@ public class LyChIStandardizer {
 		/*
 		  if (naro == arobond) {
 		  // bail out early if 
-		  if (debug) {
+		  if (DEBUG) {
 		  System.out.println("** truncating search!");
 		  }
 		  break;
@@ -684,14 +688,14 @@ public class LyChIStandardizer {
 	}
 	
 	// update the final bond order
-	if (debug) {
+	if (DEBUG) {
 	    System.err.print("final order:");
 	}
 	for (int i = 0; i < order.length; ++i) {
 	    if (order[i] != 0) {
 		bary[i].setType(order[i]);
 		//bary[i].setFlags(order[i], MolBond.TYPE_MASK);
-		if (debug) {
+		if (DEBUG) {
 		    System.err.print
 			(" " + (mol.indexOf(bary[i].getAtom1())+1)
 			 +"-" + (mol.indexOf(bary[i].getAtom2())+1)
@@ -700,7 +704,7 @@ public class LyChIStandardizer {
 	    }
 	}
 
-	if (debug) {
+	if (DEBUG) {
 	    System.err.println();
 	    System.out.println(mol.toFormat("smiles:q"));
 	}
@@ -723,7 +727,7 @@ public class LyChIStandardizer {
 		  a.getImplicitHcount() + a.getExplicitHcount())) {
 		  }
 		  else {
-		  if (debug) {
+		  if (DEBUG) {
 		  System.err.println
 		  ("fixing charge at atom " + (i+1) +": " + (r+c));
 		  }
@@ -756,7 +760,7 @@ public class LyChIStandardizer {
 		     a.getValence(), a.getImplicitHcount())) {
 		    // ok, now try  to see if this is can be fixed with
 		    //  aromatization...
-		    if (debug) {
+		    if (DEBUG) {
 			System.err.println("Adjust bonds connecting to atom");
 			_atom (System.err, i+1, a);
 		    }
@@ -767,7 +771,7 @@ public class LyChIStandardizer {
 			    // do nothing...
 			}
 			else if (m.isRingBond(m.indexOf(b))) {
-			    if (debug) {
+			    if (DEBUG) {
 				System.err.println
 				    ("Adjusting bond " 
 				     + (m.indexOf(b)+1)
@@ -814,7 +818,7 @@ public class LyChIStandardizer {
 		int a1 = m.indexOf(b.getAtom1());
 		int a2 = m.indexOf(b.getAtom2());
 		if (aromaticAtoms.get(a1) && aromaticAtoms.get(a2)) {
-		    if (debug) {
+		    if (DEBUG) {
 			if (b.getType() != MolBond.AROMATIC) {
 			    System.err.println
 				("Adjusting bond " 
@@ -905,7 +909,19 @@ public class LyChIStandardizer {
 
             int ch = a.getCharge();
             if (ch < 0) {
-                a.setCharge(ch+1);
+                boolean chargeSeparated = false;
+                for (int k = 0; k < a.getBondCount(); ++k) {
+                    int xch = a.getBond(k).getOtherAtom(a).getCharge();
+                    if (xch > 0) {
+                        chargeSeparated = true;
+                        break;
+                    }
+                }
+
+                // only neutralize this atom if it's not in charge 
+                // separated form
+                if (!chargeSeparated) 
+                    a.setCharge(ch+1);
             }
         } // endfor each atom
 
@@ -947,7 +963,7 @@ public class LyChIStandardizer {
 
             int parity = bond.getFlags() & MolBond.STEREO1_MASK;
             if (parity == MolBond.UP || parity == MolBond.DOWN) {
-                if (debug) {
+                if (DEBUG) {
                     logger.info("++ adding explicit H ("+getParityFlag (parity)
                                 +") at stereocenter "+(m.indexOf(a)+1));
                 }
@@ -965,7 +981,7 @@ public class LyChIStandardizer {
         if (!newH.isEmpty())
             ChemUtil.localLayout(newH.toArray(new MolAtom[0]));
 
-        if (debug) {
+        if (DEBUG) {
             logger.info("-- "+newH.size()+" chiral Hs added\n"
                         +m.toFormat("mol"));
         }
@@ -979,7 +995,7 @@ public class LyChIStandardizer {
             MolBond b = rbonds[0]; // sorted by ascending rank
             int parity = b.getFlags() & MolBond.STEREO1_MASK;
             
-            if (debug) {
+            if (DEBUG) {
                 logger.info("Stereocenter "+(m.indexOf(a)+1)
                             +": lowest ranked neighbor "
                             +(m.indexOf(b.getOtherAtom(a))+1)
@@ -1047,9 +1063,9 @@ public class LyChIStandardizer {
             m.setChirality(i, me.getValue());
         }
 
-        if (debug) {
+        if (DEBUG) {
             logger.info(m.toFormat("mol"));
-            logger.info(m.toFormat("smiles:q"));
+            logger.info("++ preprocessing: "+m.toFormat("smiles:q"));
         }
     } // preprocessing
 
@@ -1151,6 +1167,10 @@ public class LyChIStandardizer {
 
 	mol.expandSgroups();
 
+        if (DEBUG) {
+            logger.info(">> INPUT: "+ChemUtil.canonicalSMILES(mol));
+        }
+
         /*
          * standardize on explicit Hs and bond parities
          */
@@ -1183,7 +1203,7 @@ public class LyChIStandardizer {
                 mol.setChirality(i, 0);
 	    }
 
-	    if (debug) {
+	    if (DEBUG) {
                 logger.info
 		    ("Atom "+(i+1)+": "+atoms[i].getSymbol()+" chiral="
 		     +chiral[i] + " flags="+aflags[i]
@@ -1212,7 +1232,7 @@ public class LyChIStandardizer {
 	}
 
 	int dim = mol.getDim();
-	if (debug) {
+	if (DEBUG) {
 	    logger.info("++ Molecule has dimension "+dim);
 	}
 
@@ -1221,7 +1241,7 @@ public class LyChIStandardizer {
 	    coords[i] = atoms[i].getLocation();
 	}
 
-	if (debug) {
+	if (DEBUG) {
 	    logger.info("++ Molecule has "+stereocenters+" stereocenter(s)!");
 	}
 
@@ -1235,7 +1255,7 @@ public class LyChIStandardizer {
 		}
 	    }
 	    
-	    if (debug) {
+	    if (DEBUG) {
 		logger.info("++ Molecule has "+parity+" parity bond(s)!");
 	    }
 	    
@@ -1255,7 +1275,7 @@ public class LyChIStandardizer {
 
 	/*disconnectMetals (mol);*/
 	
-	if (debug) {
+	if (DEBUG) {
 	    System.err.println("Metals? " + metals 
 			       + " " + ChemUtil.canonicalSMILES (mol) 
 			       //+ " "+mol.toFormat("smiles:q"));
@@ -1264,7 +1284,7 @@ public class LyChIStandardizer {
 
 	// remove bogus radicals that jchem introduces
 	fixRadical (mol);
-	if (debug) {
+	if (DEBUG) {
 	    System.err.println("fixRadical: " + ChemUtil.canonicalSMILES (mol)
 			       //+" "+mol.toFormat("smiles:q"));
 			       +"\n"+mol.toFormat("mol"));
@@ -1272,7 +1292,7 @@ public class LyChIStandardizer {
 
 	// fix any bad valence not due to aromaticity
 	fixValence (mol);
-	if (debug) {
+	if (DEBUG) {
 	    System.err.println("fixValence: " + ChemUtil.canonicalSMILES (mol) 
 			       //+ " " + mol.toFormat("smiles:q"));
 			       +"\n"+mol.toFormat("mol"));
@@ -1280,7 +1300,7 @@ public class LyChIStandardizer {
 
 	// attempt to fix any bogus aromatic bonds
 	kekulize (mol);
-	if (debug) {
+	if (DEBUG) {
 	    System.err.println("kekulize: " + ChemUtil.canonicalSMILES (mol) 
 			       //+ " " + mol.toFormat("smiles:q"));
 			       +"\n"+mol.toFormat("mol"));
@@ -1297,7 +1317,7 @@ public class LyChIStandardizer {
 	    Molecule f = frags[i];
 	    f.setName(name);
 
-	    if (debug) {
+	    if (DEBUG) {
 		System.err.println("Normalizing fragment " +i+": " 
 				   + ChemUtil.canonicalSMILES (f) 
 				   //+ " "+f.toFormat("smiles:q"));
@@ -1310,7 +1330,7 @@ public class LyChIStandardizer {
 		for (int j = 0; j < normalizer.length; ++j) {
 		    SMIRKS rule = normalizer[j];
 		    if (rule.transform(f)) {
-			if (debug) {
+			if (DEBUG) {
 			    System.err.println("++ rule " + j + ": " + rule);
 			    System.err.println
 				("=> " + ChemUtil.canonicalSMILES (f));
@@ -1339,7 +1359,7 @@ public class LyChIStandardizer {
 
 		    boolean valenceError = f.hasValenceError();
 		    if (rule.transform(f)) {
-			if (debug) {
+			if (DEBUG) {
 			    System.err.println
 				("++ rule " + j + ": " + rule);
 			    System.err.println
@@ -1374,40 +1394,41 @@ public class LyChIStandardizer {
 		}
 		
 		// apply external normalization rules
-		for (int j = 0; j < externalNormalizer.length; ++j) {
-		    SMIRKS rule = externalNormalizer[j];
+                if (UNMEX) {
+                    for (int j = 0; j < externalNormalizer.length; ++j) {
+                        SMIRKS rule = externalNormalizer[j];
+                        
+                        boolean valenceError = f.hasValenceError();
+                        if (rule.transform(f)) {
+                            if (DEBUG) {
+                                System.err.println
+                                    ("++ rule " + j + ": " + rule);
+                                System.err.println
+                                    ("=> " + ChemUtil.canonicalSMILES (f));
+                            }
+                        }
+                        f.valenceCheck();
+                        
+                        if (f.hasValenceError() && !valenceError) {
+                            System.err.println
+                                (" ++ " + name + " (frag " + i 
+                                 + "): bogus structure generated by rule " + j
+                                 + ": " + rule
+                                 + " ==> " + ChemUtil.canonicalSMILES (f));
+                            System.err.println("** Atom with valence error:");
+                            atoms = f.getAtomArray();
+                            for (int k = 0; k < atoms.length; ++k) {
+                                if (atoms[k].hasValenceError()) {
+                                    _atom (System.err, k+1, atoms[k]);
+                                }
+                            }
+                            
+                            break;
+                        }
+                    }
+                }
 
-		    boolean valenceError = f.hasValenceError();
-		    if (rule.transform(f)) {
-			if (debug) {
-			    System.err.println
-				("++ rule " + j + ": " + rule);
-			    System.err.println
-				("=> " + ChemUtil.canonicalSMILES (f));
-			}
-		    }
-		    f.valenceCheck();
-
-		    if (f.hasValenceError() && !valenceError) {
-			System.err.println
-			    (" ++ " + name + " (frag " + i 
-			     + "): bogus structure generated by rule " + j
-			     + ": " + rule
-			     + " ==> " + ChemUtil.canonicalSMILES (f));
-			System.err.println("** Atom with valence error:");
-			atoms = f.getAtomArray();
-			for (int k = 0; k < atoms.length; ++k) {
-			    if (atoms[k].hasValenceError()) {
-				_atom (System.err, k+1, atoms[k]);
-			    }
-			}
-
-			break;
-		    }
-		   
-		}
-
-		if (debug) {
+		if (DEBUG) {
 		    System.err.println("** Normalized fragment "+i+": " 
 				       + ChemUtil.canonicalSMILES (f) 
 				       + " "+f.toFormat("smiles:q"));
@@ -1426,7 +1447,7 @@ public class LyChIStandardizer {
 			f = copy;
 		    }
 
-		    if (debug) {
+		    if (DEBUG) {
 			int cnt = 0;
 			System.err.println
 			    (taugen.getTautomerCount() + " tautomers");
@@ -1455,7 +1476,7 @@ public class LyChIStandardizer {
 		      + f.toFormat("smiles:u") 
 		      + " is a salt after transformations!");
 		    */
-		    if (debug) {
+		    if (DEBUG) {
 			System.err.println("## Fragment "+i 
 					   + " is salt/solvent: "
 					   + saltId.identifySaltOrSolvent(f));
@@ -1469,7 +1490,7 @@ public class LyChIStandardizer {
 		f = null;
 	    }
 
-	    if (debug) {
+	    if (DEBUG) {
 		if (f != null) {
 		    System.err.println("** Canonicalized fragment "+i+": " 
 				       + ChemUtil.canonicalSMILES (f) 
@@ -1508,7 +1529,7 @@ public class LyChIStandardizer {
 		}
 	    }
 	    
-	    if (debug) {
+	    if (DEBUG) {
 		System.err.println("Fused: "+fused);
 	    }
 	    
@@ -1556,7 +1577,7 @@ public class LyChIStandardizer {
 	    }
 	}
 
-	if (debug) {
+	if (DEBUG) {
 	    System.err.println("Postprocessing: " 
                                +ChemUtil.canonicalSMILES (mol)
 			       + " "+mol.toFormat("smiles:q")
@@ -1566,7 +1587,7 @@ public class LyChIStandardizer {
 	mol.setName(name);
 	postprocessing (mol);
 
-	if (debug) {
+	if (DEBUG) {
 	    logger.info("Number of components: "+frags.length);
 	    for (Molecule f : frags) {
                 if (f != null)
@@ -1580,7 +1601,7 @@ public class LyChIStandardizer {
                 if (f != null) {
                     f.setName(name);
                     postprocessing (f);
-                    if (debug) {
+                    if (DEBUG) {
                         logger.info("Component "+(i+1)+": "
                                     +f.toFormat("smiles:q"));
                     }
@@ -1653,7 +1674,7 @@ public class LyChIStandardizer {
 	}
 	bflags = null;
 
-        if (debug) {
+        if (DEBUG) {
 	    System.err.println("Restore Bond Flags: " 
                                + ChemUtil.canonicalSMILES (mol)
 			       +"\n"+mol.toFormat("mol"));
@@ -1662,7 +1683,7 @@ public class LyChIStandardizer {
         // only override stereo if the input molecule has coordinates
 	/*
           adjustStereo (dim >= 2, chiral, mol);
-	if (debug) {
+	if (DEBUG) {
 	    System.err.println("Stereo Adjustment: " 
                                + ChemUtil.canonicalSMILES (mol)
 			       //+ " "+mol.toFormat("smiles:q"));
@@ -1682,7 +1703,7 @@ public class LyChIStandardizer {
         // this is important as it recalculate the stereocenters
         mol.setDim(dim);
 
-	if (debug) {
+	if (DEBUG) {
 	    System.err.println("CleanUp: " + ChemUtil.canonicalSMILES (mol)
 			       //+ " "+mol.toFormat("smiles:q"));
 			       +"\n"+mol.toFormat("mol"));
@@ -1745,7 +1766,7 @@ public class LyChIStandardizer {
     }
 
     void adjustStereo (boolean override, int[] chiral, Molecule mol) {
-	if (debug) {
+	if (DEBUG) {
 	    logger.info("** Stereo adjustments...");
 	}
 
@@ -1763,7 +1784,7 @@ public class LyChIStandardizer {
 
 	    int s = b.getFlags() & MolBond.STEREO1_MASK;
 	    if (s == MolBond.UP) {                
-		if (debug) {
+		if (DEBUG) {
 		    System.err.print("Up: ");
 		    if (si == MolAtom.CHIRALITY_R) {
 			System.err.print("R");
@@ -1799,7 +1820,7 @@ public class LyChIStandardizer {
 			|| (ringsize[j] > 0 && ringsize[i] == 0) 
 			|| (chiral[mi] != si && chiral[mj] != sj)) {
 			// this bond is point in the wrong direction.. flip
-			if (debug) {
+			if (DEBUG) {
 			    logger.info("Flipping bond "+(mi+1)+"-"+(mj+1));
 			}
 			b.swap();
@@ -1807,7 +1828,7 @@ public class LyChIStandardizer {
 		}
 		else if (sj == MolAtom.CHIRALITY_R
 			 || sj == MolAtom.CHIRALITY_S) {
-		    if (debug) {
+		    if (DEBUG) {
 			logger.info("Flipping bond "+(mi+1)+"-"+(mj+1));
 		    }
 		    b.swap();
@@ -1828,7 +1849,7 @@ public class LyChIStandardizer {
 		}
 	    }
 	    else if (s == MolBond.DOWN) {
-		if (debug) {
+		if (DEBUG) {
 		    System.err.print("Down: ");
 		    if (si == MolAtom.CHIRALITY_R) {
 			System.err.print("R");
@@ -1862,7 +1883,7 @@ public class LyChIStandardizer {
 			|| (ringsize[j] > 0 && ringsize[i] == 0)
 			|| (chiral[mi] != si && chiral[mj] != sj)
 			) {
-			if (debug) {
+			if (DEBUG) {
 			    logger.info("Flipping bond "+(mi+1)+"-"+(mj+1));
 			}
 			// this bond is point in the wrong direction.. flip
@@ -1871,7 +1892,7 @@ public class LyChIStandardizer {
 		}
 		else if (sj == MolAtom.CHIRALITY_R
 			 || sj == MolAtom.CHIRALITY_S) {
-		    if (debug) {
+		    if (DEBUG) {
 			logger.info("Flipping bond "+(mi+1)+"-"+(mj+1));
 		    }
 		    // swap...
@@ -1903,7 +1924,7 @@ public class LyChIStandardizer {
             }
 	}
 
-	if (debug) {
+	if (DEBUG) {
 	    for (MolBond b : mol.getBondArray()) {
 		int i = mol.indexOf(b.getAtom1());
 		int j = mol.indexOf(b.getAtom2());
@@ -1911,7 +1932,7 @@ public class LyChIStandardizer {
 		int sj = mol.getChirality(j);
 		int s = b.getFlags() & MolBond.STEREO1_MASK;
 		if (s == MolBond.UP) {
-		    if (debug) {
+		    if (DEBUG) {
 			System.err.print("Up: ");
 			if (si == MolAtom.CHIRALITY_R) {
 			    System.err.print("R");
@@ -1936,7 +1957,7 @@ public class LyChIStandardizer {
 		    }
 		}
 		else if (s == MolBond.DOWN) {
-		    if (debug) {
+		    if (DEBUG) {
 			System.err.print("Down: ");
 			if (si == MolAtom.CHIRALITY_R) {
 			    System.err.print("R");
@@ -2071,7 +2092,7 @@ public class LyChIStandardizer {
 	    if (chiral != 0 && a.getAtno() != 7) {
 		int stereo1 = countBondParity (a, -1);
 		int stereo2 = countBondParity (a, 1);
-		if (debug) {
+		if (DEBUG) {
 		    logger.info("** Atom "+(j+1)+" stereo2="+stereo2
 				+" stereo1="+stereo1);
 		}
@@ -2187,7 +2208,7 @@ public class LyChIStandardizer {
 			    int c = mol.getChirality(xi);
 			    if (c == MolAtom.CHIRALITY_R
 				|| c == MolAtom.CHIRALITY_S) {
-				if (debug) {
+				if (DEBUG) {
 				    logger.info("Flipping bond "+(j+1) +" and "
 						+(xi+1));
 				}
@@ -2264,14 +2285,14 @@ public class LyChIStandardizer {
 	int count = 0;
 
 	Molecule mol = (Molecule)atom.getParent();
-	if (debug) {
+	if (DEBUG) {
 	    logger.info("** Atom "+(mol.indexOf(atom)+1));
 	}
 	for (int n = 0; n < atom.getBondCount(); ++n) {
 	    MolBond nb = atom.getBond(n);
 	    int parity = nb.getFlags() & MolBond.STEREO1_MASK;
 	    if (parity == MolBond.UP) {
-		if (debug) {
+		if (DEBUG) {
 		    System.err.println(" UP: "+(mol.indexOf(nb.getAtom1())+1)
 				       +"-"+(mol.indexOf(nb.getAtom2())+1));
 		}
@@ -2290,7 +2311,7 @@ public class LyChIStandardizer {
 		}
 	    }
 	    else if (parity == MolBond.DOWN) {
-		if (debug) {
+		if (DEBUG) {
 		    System.err.println(" DOWN: "+(mol.indexOf(nb.getAtom1())+1)
 				       +"-"+(mol.indexOf(nb.getAtom2())+1));
 		}
@@ -2343,7 +2364,7 @@ public class LyChIStandardizer {
 	    MolAtom a = mol.getAtom(i);
 	    int m = a.getAtomMap();
 	    if (m == 0) {
-		if (debug) {
+		if (DEBUG) {
 		    logger.warning("Atom "+(i+1)+" has no mapping!");
 		}
 		unmapped.add(a);
@@ -2410,7 +2431,7 @@ public class LyChIStandardizer {
 	
 	if (pos > 0) {
 	    deprotonate (mol);
-	    if (debug) {
+	    if (DEBUG) {
 		System.err.println("Deprotonate: " 
                                    + ChemUtil.canonicalSMILES(mol) 
 				   + " " + mol.toFormat("smiles:q"));
@@ -2460,7 +2481,7 @@ public class LyChIStandardizer {
 	
 	if (neg > 0) {
 	    protonate (mol);
-	    if (debug) {
+	    if (DEBUG) {
 		System.err.println("Standardized molecule has -"+neg+" charge "
 				   +"; attempt to neutralize...");
 		System.err.println(ChemUtil.canonicalSMILES (mol));
@@ -2473,7 +2494,7 @@ public class LyChIStandardizer {
 	     */
 	    try {
 		String smiles = mol.toFormat("cxsmiles:u");
-                if (debug) {
+                if (DEBUG) {
                     logger.log(Level.INFO, "Before final molecule cleaning: "
                                +smiles);
                 }
@@ -2495,7 +2516,7 @@ public class LyChIStandardizer {
 		    // leave mol as-is
 		}
 		else {
-		    if (debug) {
+		    if (DEBUG) {
 			logger.info("Final molecule clean-up\n"
 				    +newmol.toFormat("mol"));
 		    }
@@ -2609,7 +2630,7 @@ public class LyChIStandardizer {
 
 	// level2: full canonical smiles with stereo/isotope/charge...
 	String level3 = molstr;
-	if (debug) {
+	if (DEBUG) {
 	    logger.info("hash layers:\n"+
 			"0: "+level0 + "\n"+
 			"1: "+level1 + "\n"+
@@ -2658,7 +2679,7 @@ public class LyChIStandardizer {
             // new NCGCTautomerGenerator ()
             new SayleDelanyTautomerGenerator (1001);
 
-        if (Boolean.getBoolean("keto-enol")) {
+        if (Boolean.getBoolean("lychi-keto-enol")) {
             // hanlding keto-enol... might be too slow
             ((SayleDelanyTautomerGenerator)tg).set
                 (SayleDelanyTautomerGenerator.FLAG_ALL);
@@ -2672,9 +2693,16 @@ public class LyChIStandardizer {
          * -Dkeep-salt={true|false}
          * to turn off/on strip salt/solvent
          */
-        boolean removeSaltSolvent = !Boolean.getBoolean("keep-salt");
+        boolean removeSaltSolvent = !Boolean.getBoolean("lychi-keep-salt");
         logger.info("## Salt/solvent stripping is "
                     +(removeSaltSolvent ? "on":"off"));
+
+        /*
+         * -Doutput-format={smi,smiles,sdf}
+         * output format
+         */
+        String format = System.getProperty("lychi-format", "smi");
+        logger.info("## Output format: "+format);
 
 	LyChIStandardizer msz = new LyChIStandardizer (tg);
 	msz.removeSaltOrSolvent(removeSaltSolvent);
@@ -2711,7 +2739,7 @@ public class LyChIStandardizer {
 		msz.standardize(mol);
 		
 		String smi = ChemUtil.canonicalSMILES (mol, true);
-		if (dim > 0) {
+		if (!format.startsWith("smi")) {
 		    mol.setProperty("LyChI_SMILES", smi);
                     String hk = hashKey (mol);
 		    mol.setProperty("LyChI_HK", hk);
@@ -2726,9 +2754,10 @@ public class LyChIStandardizer {
 		}
 		else {
                     //os.println("## fragments: "+msz.getFragmentCount());
-		    if (msz.getFragmentCount() > 1) {
-                        os.println(smi
-                                   +"\t"+name+"\t"+hashKey (mol));
+                    os.println(smi
+                               +"\t"+name+"\t"+hashKey (mol));                    
+                    if (!removeSaltSolvent && msz.getFragmentCount() > 1) {
+                        // if we're not removing salt then output all components
 			for (Molecule frag : msz.getFragments()) {
                             if (frag != null) {
                                 os.println(ChemUtil.canonicalSMILES(frag) 
@@ -2737,10 +2766,6 @@ public class LyChIStandardizer {
                             }
 			}
 		    }
-                    else {
-                        os.println(smi + "\t" + name + "\t" 
-                                   + hashKey (mol)); 
-                    }
 		}
             }
             catch (Exception ex) {
@@ -2773,9 +2798,19 @@ public class LyChIStandardizer {
 	    process (tag, System.in, System.out);
 	}
 	else {
+            PrintStream os = System.out;
+            String out = System.getProperty("output");
+            if (out != null) {
+                os = new PrintStream (new FileOutputStream (out));
+                logger.info("** Writing output to \""+out+"\"...");
+            }
+
 	    for (String file : input ) {
-		process (tag, new java.io.FileInputStream (file), System.out);
+		process (tag, new java.io.FileInputStream (file), os);
 	    }
+
+            if (os != System.out)
+                os.close();
 	}
     }
 }
