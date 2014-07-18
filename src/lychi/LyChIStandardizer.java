@@ -2650,8 +2650,6 @@ public class LyChIStandardizer {
 
     static void process (String tag, java.io.InputStream is, PrintStream os) 
 	throws Exception {
-	MolImporter mi = new MolImporter (is);
-
         /*
          * java -Dketo-enol=true ... 
          * to turn on keto-enol tautomerism
@@ -2659,6 +2657,7 @@ public class LyChIStandardizer {
 	TautomerGenerator tg = 
             // new NCGCTautomerGenerator ()
             new SayleDelanyTautomerGenerator (1001);
+
         if (Boolean.getBoolean("keto-enol")) {
             // hanlding keto-enol... might be too slow
             ((SayleDelanyTautomerGenerator)tg).set
@@ -2669,9 +2668,18 @@ public class LyChIStandardizer {
             logger.info("## Keto-Enol tautomerism is off");
         }
 
-	LyChIStandardizer msz = new LyChIStandardizer (tg);
-	msz.removeSaltOrSolvent(true);
+        /*
+         * -Dkeep-salt={true|false}
+         * to turn off/on strip salt/solvent
+         */
+        boolean removeSaltSolvent = !Boolean.getBoolean("keep-salt");
+        logger.info("## Salt/solvent stripping is "
+                    +(removeSaltSolvent ? "on":"off"));
 
+	LyChIStandardizer msz = new LyChIStandardizer (tg);
+	msz.removeSaltOrSolvent(removeSaltSolvent);
+
+	MolImporter mi = new MolImporter (is);
 	for (Molecule mol = new Molecule (); ; ) {
             try {
                 if (!mi.read(mol))
@@ -2704,8 +2712,16 @@ public class LyChIStandardizer {
 		
 		String smi = ChemUtil.canonicalSMILES (mol, true);
 		if (dim > 0) {
-		    mol.setProperty("Std_SMILES", smi);
-		    mol.setProperty("HashKey", hashKey (mol));
+		    mol.setProperty("LyChI_SMILES", smi);
+                    String hk = hashKey (mol);
+		    mol.setProperty("LyChI_HK", hk);
+
+                    String []toks = hk.split("-");
+                    mol.setProperty("LyChI_HK1", toks[0]);
+                    mol.setProperty("LyChI_HK2", toks[1]);
+                    mol.setProperty("LyChI_HK3", toks[2]);
+                    mol.setProperty("LyChI_HK4", toks[3]);
+
 		    os.print(mol.toFormat("sdf"));
 		}
 		else {
