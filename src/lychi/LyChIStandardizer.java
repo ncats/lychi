@@ -49,16 +49,19 @@ public class LyChIStandardizer {
     public static final int VERSION = 0x10;
 
     static final private boolean DEBUG;
-    static final private boolean UNMEX = true; // apply UNM extra rules
+    static final private boolean UNMEX; // apply UNM extra rules
     static {
         boolean debug = false;
+        boolean extra = false;
 	try {
 	    debug = Boolean.getBoolean("lychi-debug");
+            extra = Boolean.getBoolean("lychi-unm-extra");
 	}
 	catch (Exception ex) {
             ex.printStackTrace();
 	}
         DEBUG = debug;
+        UNMEX = extra;
     }
 
 
