@@ -2633,7 +2633,7 @@ public class LyChIStandardizer {
 		    os.print(mol.toFormat("sdf"));
 		}
 		else {
-                    os.println("## fragments: "+msz.getFragmentCount());
+                    //os.println("## fragments: "+msz.getFragmentCount());
 		    if (msz.getFragmentCount() > 1) {
                         os.println(smi
                                    +"\t"+name+"\t"+hashKey (mol));
