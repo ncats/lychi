@@ -573,14 +573,8 @@ public class Base32 {
 
     static class Encode {
         public static void main (String[] argv) throws Exception {
-            byte[] data = new byte[4];
             for (String a : argv) {
-                int x = Integer.parseInt(a);
-                data[3] = (byte)((x & 0x01ffffff)>>>24);
-                data[2] = (byte)((x & 0x00ffffff)>>>16);
-                data[1] = (byte)((x & 0x0000ffff)>>>8);
-                data[0] = (byte)(x & 0xff);
-                System.out.println(x+": "+encode25 (data));
+                System.out.println(a+": "+unrank (Long.parseLong(a)));
             }
         }
     }
