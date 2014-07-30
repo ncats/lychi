@@ -7,8 +7,6 @@
   <property name="classes" value="${web}/classes"/>
   <property name="weblib" value="${web}/lib"/>
   <property name="src" value="src"/>
-  <property name="version" value="0.1"/>
-  <property name="jar" value="lychi-v${version}.jar"/>
   <mkdir dir="${weblib}"/>
 
   <path id="compile.classpath">
@@ -28,7 +26,9 @@
     <tstamp>
        <format property="touch.time"
                 pattern="MM/dd/yyyy 'at' HH:mm:ss z"/>
+       <format property="version" pattern="yyyyMMdd"/>
     </tstamp>
+    <property name="jar" value="lychi-v${version}.jar"/>
 
     <!-- Create the build directory structure used by compile -->
     <mkdir dir="${build}"/>
