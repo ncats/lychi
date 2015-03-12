@@ -5,14 +5,14 @@ This directory contains code for BARD structure standardizer. To build
 simply type
 
 ```
-ant
+mvn clean package
 ```
 
-To build a self-contained jar with dependencies included, use `ant
-all` instead. The self-contained jar file can be invoked directly;
+This produces two jar files: one with dependencies included, and without. The 
+self-contained jar file can be invoked directly;
 e.g., 
 
 ```
-java -jar dist/lychi-all-v0.1.jar tests/standardizer_case1.smi
+java -jar target/lychi-0.1-jar-with-dependencies.jar tests/standardizer_case1.smi
 ```
 

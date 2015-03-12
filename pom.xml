@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>gov.nih.ncats</groupId>
+  <artifactId>lychi</artifactId>
+  <packaging>jar</packaging>
+  <version>0.1</version>
+  <name>lychi</name>
+
+  <properties>
+    <java.version>1.6</java.version>
+    <maven.compiler.plugin.version>2.3.2</maven.compiler.plugin.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>1.6</maven.compiler.source>
+    <maven.compiler.target>1.6</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <log4jVersion>1.2.16</log4jVersion>
+    <commonsLang3Version>3.1</commonsLang3Version>
+    <gae.version>1.6.5</gae.version>
+    <deploy.dir>bin</deploy.dir>
+  </properties>
+  
+  <repositories>
+	<repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>central</id>
+      <name>Maven Repository Switchboard</name>
+      <url>http://repo1.maven.org/maven2</url>
+    </repository>
+   <repository>
+       <id>lib_id</id>
+       <url>file://${project.basedir}/lib</url>
+   </repository>
+  </repositories>
+    
+  <dependencies> 
+  <dependency>
+         <groupId>chemaxon.jchem</groupId>
+         <artifactId>jchem</artifactId>
+         <version>3</version>
+     </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>${project.artifactId}-${project.version}</finalName>
+    <outputDirectory>${deploy.dir}</outputDirectory>
+    <plugins>
+    <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+    <archive>
+      <manifest>
+        <mainClass>lychi.LyChIStandardizer</mainClass>
+      </manifest>
+    </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+      </plugin>
+
+
+
+
+    </plugins>
+  </build>
+    <distributionManagement>
+        <repository>
+            <id>carnot.ncats.nih.gov</id>
+            <name>carnot.ncats.nih.gov-releases</name>    
+	    <url>http://carnot.ncats.nih.gov:8101/artifactory/libs-release-local</url>
+        </repository>
+    </distributionManagement>
+</project>
