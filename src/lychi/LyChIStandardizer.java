@@ -116,9 +116,9 @@ public class LyChIStandardizer {
         "[N++;v4:1][O:2]>>[N+:1][O-:2]",
         "[S;v5:1](=[O:2])(=[O:3])([*:4])>>[S:1]([O-:2])(=[O:3])([*:4])",
         "[#6:1](=[S;v3:2])([NH:3])>>[#6:1]([S:2])(=[N;v3:3])",
-        "[O-;v2:1]>>[O;+0:1]",
+        "[O-;v2:1]>>[O;+0:1]"
         // remove water
-        "[OX2;h2]>>"
+        //"[OX2;h2]>>"
     };
     
 
@@ -2783,7 +2783,8 @@ public class LyChIStandardizer {
                 else {
                     //os.println("## fragments: "+msz.getFragmentCount());
                     os.println(smi
-                               +"\t"+name+"\t"+hashKey (mol));                    
+                               +"\t"+name+"\t"+hashKey (mol));
+                    /*
                     if (!removeSaltSolvent && msz.getFragmentCount() > 1) {
                         // if we're not removing salt then output all components
                         for (Molecule frag : msz.getFragments()) {
@@ -2794,6 +2795,7 @@ public class LyChIStandardizer {
                             }
                         }
                     }
+                    */
                 }
             }
             catch (Exception ex) {
