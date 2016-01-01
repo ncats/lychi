@@ -240,7 +240,7 @@ public class LyChIStandardizer {
         this.taugen = taugen;
     }
 
-    protected static boolean containMetals (Molecule mol) {
+    public static boolean containMetals (Molecule mol) {
         MolAtom atoms[] = mol.getAtomArray();
         for (int i = 0; i < atoms.length; ++i) {
             MolAtom a = atoms[i];
@@ -1222,13 +1222,22 @@ public class LyChIStandardizer {
             if (atoms[i].getAtno() == 7
                 && (chiral[i] == MolAtom.CHIRALITY_R 
                     || chiral[i] == MolAtom.CHIRALITY_S)) {
-                logger.warning("** Removing "+getChiralFlag (chiral[i])
-                               +" stereocenter defined "
-                               +"for N atom at "+(i+1));
+                int heavy = 0;
+                for (int j = 0; j < atoms[i].getBondCount(); ++j) {
+                    MolAtom xa = atoms[i].getBond(j).getOtherAtom(atoms[i]);
+                    if (xa.getAtno() != 1)
+                        ++heavy;
+                }
                 
-                // for N, we make sure it doesn't have a stereocenter
-                //  because of inversion?
-                mol.setChirality(i, 0);
+                if (heavy < 4) {
+                    logger.warning("** Removing "+getChiralFlag (chiral[i])
+                                   +" stereocenter defined "
+                                   +"for N atom at "+(i+1));
+                    
+                    // for N, we make sure it doesn't have a stereocenter
+                    //  because of inversion?
+                    mol.setChirality(i, 0);
+                }
             }
 
             if (DEBUG) {
