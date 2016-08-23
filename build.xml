@@ -28,7 +28,20 @@
                 pattern="MM/dd/yyyy 'at' HH:mm:ss z"/>
        <format property="version" pattern="yyyyMMdd"/>
     </tstamp>
-    <property name="jar" value="lychi-v${version}.jar"/>
+    <exec executable="git"
+	  outputproperty="commit">
+      <arg line="rev-parse --short HEAD"/>
+    </exec>
+    <property name="jar" value="lychi-${commit}.jar"/>
+    <echo file="src/lychi/Version.java">package lychi;
+public final class Version {
+   public static final String COMMIT = "${commit}";
+   public static final String DATE = "${version}";
+   public static final String USER = "${user.name}";
+   public static final String TIMESTAMP = "${touch.time}";
+   private Version () {}
+}
+</echo>
 
     <!-- Create the build directory structure used by compile -->
     <mkdir dir="${build}"/>
@@ -74,7 +87,7 @@
      <copy todir="${tmp}">
         <fileset dir="${build}" includes="**"/>
      </copy>
-     <jar jarfile="${dist}/lychi-all-v${version}.jar"
+     <jar jarfile="${dist}/lychi-all-${commit}.jar"
          basedir="${tmp}"
          includes="**">
        <manifest>

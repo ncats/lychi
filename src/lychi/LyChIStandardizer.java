@@ -251,6 +251,31 @@ public class LyChIStandardizer {
         return false;
     }
 
+    protected static void handleSpecialMetals (Molecule mol) {
+        MolBond bonds[] = mol.getBondArray();
+        List<MolBond> delete = new ArrayList<MolBond>();
+        for (int i = 0; i < bonds.length; ++i) {
+            MolAtom a1 = bonds[i].getAtom1();
+            MolAtom a2 = bonds[i].getAtom2();
+            // handle limited covalent NaO 
+            if ((a1.getAtno() == 8) && a2.getAtno() == 11) {
+                a2.setCharge(a2.getCharge()+1);
+                a1.setCharge(a1.getCharge()-1);         
+                delete.add(bonds[i]);
+            }
+            else if (a1.getAtno() == 11 && (a2.getAtno() == 8)) {
+                a1.setCharge(a1.getCharge()+1);
+                a2.setCharge(a2.getCharge()-1);
+                delete.add(bonds[i]);
+            }
+        }
+        
+        for (MolBond b : delete)
+            mol.removeEdge(b);
+        
+        mol.valenceCheck();
+    }
+
     protected static boolean disconnectMetals (Molecule mol) {
         MolAtom atoms[] = mol.getAtomArray();
         Set<MolBond> remove = new HashSet<MolBond>();
@@ -1311,6 +1336,7 @@ public class LyChIStandardizer {
         }
 
         /*disconnectMetals (mol);*/
+        handleSpecialMetals (mol);
         
         if (DEBUG) {
             System.err.println("Metals? " + metals 
@@ -1624,20 +1650,12 @@ public class LyChIStandardizer {
         mol.setName(name);
         postprocessing (mol);
 
-        if (DEBUG) {
-            logger.info("Number of components: "+frags.length);
-            for (Molecule f : frags) {
-                if (f != null)
-                    System.err.println("  "+f.toFormat("smiles:q"));
-            }
-        }
-
         if (frags.length > 1) {
             for (int i = 0; i < frags.length; ++i) {
                 Molecule f = frags[i];
                 if (f != null) {
                     f.setName(name);
-                    postprocessing (f);
+                    postprocessing (f, false);
                     if (DEBUG) {
                         logger.info("Component "+(i+1)+": "
                                     +f.toFormat("smiles:q"));
@@ -1649,6 +1667,14 @@ public class LyChIStandardizer {
             frags[0] = mol;
         }
 
+        if (DEBUG) {
+            logger.info("Number of components: "+frags.length);
+            for (Molecule f : frags) {
+                if (f != null)
+                    System.err.println("  "+f.toFormat("smiles:q"));
+            }
+        }
+        
         /*
          * now fix the atom mapping (if any) for those atoms that
          * don't have a mapping
@@ -2451,7 +2477,7 @@ public class LyChIStandardizer {
         }
     }
 
-    void postprocessing (Molecule mol) {
+    int chargeBalance (Molecule mol) {
         int pos = 0, neg = 0;
         for (MolAtom a : mol.getAtomArray()) {
             int ch = a.getCharge();
@@ -2463,10 +2489,10 @@ public class LyChIStandardizer {
             logger.warning("Molecule contains "+mol.getAtomCount()
                            +" atom(s); with +"+pos+" -"+neg+" no attempt to "
                            +"(de-) protonate!");
-            return;
+            return 0;
         }
         
-        if (pos > 0) {
+        if (pos > neg) {
             deprotonate (mol);
             if (DEBUG) {
                 System.err.println("Deprotonate: " 
@@ -2516,7 +2542,7 @@ public class LyChIStandardizer {
             }
         }
         
-        if (neg > 0) {
+        if (neg > pos) {
             protonate (mol);
             if (DEBUG) {
                 System.err.println("Standardized molecule has -"+neg+" charge "
@@ -2525,6 +2551,19 @@ public class LyChIStandardizer {
             }
         }
 
+        int net = 0;
+        for (MolAtom a : mol.getAtomArray())
+            net += a.getCharge();
+        
+        return net;
+    }
+
+    void postprocessing (Molecule mol) {
+        postprocessing (mol, true);
+    }
+    
+    void postprocessing (Molecule mol, boolean chargeBalance) {
+        if (chargeBalance) chargeBalance (mol);
         if (mol.getAtomCount() > 0) {
             /*
              * this is needed because of tests/standardizer_case10.smi
@@ -2667,7 +2706,7 @@ public class LyChIStandardizer {
 
         // level2: full canonical smiles with stereo/isotope/charge...
         String level3 = molstr;
-        if (false && DEBUG) {
+        if (DEBUG) {
             logger.info("hash layers:\n"+
                         "0: "+level0 + "\n"+
                         "1: "+level1 + "\n"+
