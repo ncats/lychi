@@ -26,20 +26,28 @@
     <tstamp>
        <format property="touch.time"
                 pattern="MM/dd/yyyy 'at' HH:mm:ss z"/>
-       <format property="version" pattern="yyyyMMdd"/>
+       <format property="date" pattern="yyyyMMdd"/>
     </tstamp>
     <exec executable="git"
 	  outputproperty="commit">
       <arg line="rev-parse --short HEAD"/>
     </exec>
     <property name="jar" value="lychi-${commit}.jar"/>
+    <!--
+	this version date should be updated only when the underlying
+	hash will change!
+    -->
+    <property name="version" value="20160823"/>
     <echo file="src/lychi/Version.java">package lychi;
 public final class Version {
+   public static final String VERSION = "${version}";    
    public static final String COMMIT = "${commit}";
-   public static final String DATE = "${version}";
    public static final String USER = "${user.name}";
    public static final String TIMESTAMP = "${touch.time}";
    private Version () {}
+   public static void main (String[] argv) {
+      System.out.println("LyChI Version: commit="+COMMIT+" version="+VERSION+" timestamp="+TIMESTAMP+" user="+USER);
+   }
 }
 </echo>
 

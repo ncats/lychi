@@ -217,6 +217,12 @@ public class LyChIStandardizer {
         }
     }
 
+    public static void cleanUp () {
+        NEUTRALIZER.remove();
+        NORMALIZER.remove();
+        EXTERNAL_NORMALIZER.remove();
+    }
+    
     private SMIRKS[] neutralizer = NEUTRALIZER.get();
     private SMIRKS[] normalizer = NORMALIZER.get();
     private SMIRKS[] externalNormalizer = EXTERNAL_NORMALIZER.get();
