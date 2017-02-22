@@ -120,8 +120,11 @@ public class LyChIStandardizer {
         // remove water
         //"[OX2;h2]>>"
     };
-    
 
+    public static String[] DehydratedRules = new String[] {
+        "[OX2;h2]>>"
+    };
+    
     private static final ThreadLocal<SMIRKS[]> NEUTRALIZER = 
         new ThreadLocal<SMIRKS[]> () {
         @Override
@@ -159,9 +162,29 @@ public class LyChIStandardizer {
             return null;
         }
     };
+
+    private static final ThreadLocal<SMIRKS[]> DEHYDRATER =
+        new ThreadLocal<SMIRKS[]> () {
+            @Override
+            protected SMIRKS[] initialValue () {
+                try {
+                    SMIRKS[] dehydrater = new SMIRKS[DehydratedRules.length];
+                    for (int i = 0; i < DehydratedRules.length; ++i) {
+                        dehydrater[i] = new SMIRKS (DehydratedRules[i]);
+                    }
+                    return dehydrater;
+                }
+                catch (Exception ex) {
+                    logger.log(Level.SEVERE, 
+                               "Can't create dehydrated transforms", ex);
+                }
+                return null;
+            }
+        };
     
     // normalizer for external transform rules
-    private static final String EXTERNAL_TRANSFORM_RULES = "resources/transform_rules.smirks";
+    private static final String EXTERNAL_TRANSFORM_RULES =
+        "resources/transform_rules.smirks";
     
     private static final ThreadLocal<SMIRKS[]> EXTERNAL_NORMALIZER = 
         new ThreadLocal<SMIRKS[]> () {
@@ -220,6 +243,7 @@ public class LyChIStandardizer {
     public static void cleanUp () {
         NEUTRALIZER.remove();
         NORMALIZER.remove();
+        DEHYDRATER.remove();
         EXTERNAL_NORMALIZER.remove();
     }
     
@@ -489,6 +513,13 @@ public class LyChIStandardizer {
             }
         }
         return false;
+    }
+
+    public static boolean isInorganic (Molecule m) {
+        for (MolAtom a : m.getAtomArray())
+            if (a.getAtno() == 6 && a.getImplicitHcount() > 0)
+                return false;
+        return true;
     }
 
     public static boolean isQueryMol (Molecule mol) {
@@ -1190,6 +1221,10 @@ public class LyChIStandardizer {
     
     public static boolean normalize (Molecule mol) {
         return transform (NORMALIZER.get(), mol);
+    }
+
+    public static boolean dehydrate (Molecule mol) {
+        return transform (DEHYDRATER.get(), mol);
     }
 
     public boolean standardize (Molecule mol) throws Exception {

@@ -62,8 +62,8 @@ public final class Version {
            deprecation="on"
            debug="on"
            includeantruntime="no"
-           target="1.5"
-           source="1.5">
+           target="1.6"
+           source="1.6">
       <classpath refid="compile.classpath"/>
     </javac>
   </target>
