@@ -2557,8 +2557,15 @@ public class LyChIStandardizer {
                 for (int i = 0; i < atoms.length; ++i) {
                     int ch = atoms[i].getCharge();
                     int hc = atoms[i].getImplicitHcount();
-                    if (atoms[i].getAtno() == 8 && hc > 0 && ch == 0) {
-                        cand.add(i);
+                    switch (atoms[i].getAtno()) {
+                    case 8: // O
+                    case 17: // Cl
+                    case 35: // Br
+                    case 53: // I
+                        if (hc > 0 && ch == 0) {
+                            cand.add(i);
+                        }
+                        break;
                     }
                 }
 
@@ -2566,7 +2573,10 @@ public class LyChIStandardizer {
                     int minrank = Integer.MAX_VALUE;
                     Integer atom = null;
                     for (Integer a : cand) {
-                        if (rank[a] < minrank) {
+                        if (rank[a] < minrank
+                            || (rank[a] == minrank
+                                && atoms[a].getAtno()
+                                < atoms[atom].getAtno())) {
                             minrank = rank[a];
                             atom = a;
                         }

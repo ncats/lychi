@@ -37,7 +37,7 @@
 	this version date should be updated only when the underlying
 	hash will change!
     -->
-    <property name="version" value="20160823"/>
+    <property name="version" value="20170222"/>
     <echo file="src/lychi/Version.java">package lychi;
 public final class Version {
    public static final String VERSION = "${version}";    
