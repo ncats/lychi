@@ -1,24 +1,36 @@
 package lychi;
 
-import java.io.*;
-import java.util.*;
-import java.util.logging.Logger;
-import java.util.logging.Level;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
+import java.io.BufferedReader;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import chemaxon.formats.MolImporter;
-import chemaxon.formats.MolFormatException;
+import chemaxon.struc.DPoint3;
 import chemaxon.struc.MolAtom;
 import chemaxon.struc.MolBond;
 import chemaxon.struc.Molecule;
-import chemaxon.struc.MoleculeGraph;
 import chemaxon.struc.RgMolecule;
 import chemaxon.util.MolHandler;
-import chemaxon.struc.DPoint3;
-import lychi.tautomers.*;
-import lychi.util.*;
+import lychi.tautomers.SayleDelanyTautomerGenerator;
+import lychi.util.Base32;
+import lychi.util.ChemUtil;
 
 /**
  * A new version of CanonicalForm but without using Reactor class;
@@ -918,8 +930,8 @@ public class LyChIStandardizer {
         int[] rank = new int[m.getAtomCount()];
         m.getGrinv(rank);
 
-        Map<MolAtom, Integer> chirality = new HashMap<MolAtom, Integer>();
-        Map<MolAtom, MolBond[]> saturated = new HashMap<MolAtom, MolBond[]>();
+        Map<MolAtom, Integer> chirality = new LinkedHashMap<MolAtom, Integer>();
+        Map<MolAtom, MolBond[]> saturated = new LinkedHashMap<MolAtom, MolBond[]>();
         for (int i = 0; i < m.getAtomCount(); ++i) {
             int chiral = m.getChirality(i);
             MolAtom a = m.getAtom(i);
@@ -2864,7 +2876,6 @@ public class LyChIStandardizer {
                 
                 int dim = mol.getDim();
                 msz.standardize(mol);
-                
                 String smi = ChemUtil.canonicalSMILES (mol, true);
                 if (!format.startsWith("smi")) {
                     mol.setProperty("LyChI_SMILES", smi);
@@ -2910,7 +2921,9 @@ public class LyChIStandardizer {
     }
     
     public static void main(String[] argv) throws Exception {
+    
         String tag = null;
+        
         List<String> input = new ArrayList<String>();
         for (int i = 0; i < argv.length; ++i) {
             if (argv[i].startsWith("tag=")) {

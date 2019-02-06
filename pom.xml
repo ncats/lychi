@@ -7,7 +7,7 @@
   <groupId>gov.nih.ncats</groupId>
   <artifactId>lychi</artifactId>
   <packaging>jar</packaging>
-  <version>0.5.0</version>
+  <version>0.5.1</version>
   <name>Lychi</name>
 
   <repositories>
@@ -42,11 +42,6 @@
         <artifactId>jchem</artifactId>
         <version>3.0.0</version>
     </dependency>
-    <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>4.12</version>
-    </dependency>
 </dependencies>
 
   <build>
@@ -78,7 +73,7 @@
    <configuration>
                <archive>
                   <manifest>
-                     <mainClass>tripod.molvec.ui.Viewer</mainClass>
+                     <mainClass>lychi.LyChIStandardizer</mainClass>
                   </manifest>
                </archive>
                <descriptorRefs>
@@ -86,37 +81,13 @@
                </descriptorRefs>
             </configuration>
   </plugin>
-  <!-- 
-  <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>create-distribution</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <finalName>GSRSPull-${project.version}</finalName>
-              <appendAssemblyId>false</appendAssemblyId>
-              <descriptors>
-                <descriptor>assembly/sample.xml</descriptor>
-              </descriptors>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      -->
     </plugins>
     <resources>
         <resource>
             <directory>src/main/java</directory>
             <includes>
-                <include>**/*.html</include>
-				<include>**/*.js</include>
-				<include>**/*.css</include>
-				<include>**/*.png</include>
+                <include>**/*.smi</include>
+  	        <include>**/*.smirks</include>
             </includes>
         </resource>
     </resources>
