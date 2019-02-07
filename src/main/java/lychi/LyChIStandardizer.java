@@ -20,6 +20,8 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import chemaxon.formats.MolImporter;
 import chemaxon.struc.DPoint3;
@@ -931,7 +933,7 @@ public class LyChIStandardizer {
         m.getGrinv(rank);
 
         Map<MolAtom, Integer> chirality = new LinkedHashMap<MolAtom, Integer>();
-        Map<MolAtom, MolBond[]> saturated = new LinkedHashMap<MolAtom, MolBond[]>();
+        Map<MolAtom, MolBond[]> saturated = new HashMap<MolAtom, MolBond[]>();
         for (int i = 0; i < m.getAtomCount(); ++i) {
             int chiral = m.getChirality(i);
             MolAtom a = m.getAtom(i);
@@ -1154,6 +1156,26 @@ public class LyChIStandardizer {
         for (Map.Entry<MolAtom, Integer> me : chirality.entrySet()) {
             int i = m.indexOf(me.getKey());
             m.setChirality(i, me.getValue());
+        }
+        
+        /*
+         * Actually, do it again since sometimes there are chiral values
+         * which will not be fully set by this round
+         */
+        for (Map.Entry<MolAtom, Integer> me : chirality.entrySet()) {
+            int i = m.indexOf(me.getKey());
+            m.setChirality(i, me.getValue());
+        }
+        
+        
+        
+        for (Map.Entry<MolAtom, Integer> me : chirality.entrySet()) {
+            int i = m.indexOf(me.getKey());
+            int oi=me.getValue();
+            int ni=m.getChirality(i);
+            if(oi!=ni){
+            	logger.warning("The stereo on atom " + i + " may have changed chirality during standardization!");
+            }
         }
 
         if (DEBUG) {
