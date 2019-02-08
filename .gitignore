@@ -8,3 +8,5 @@
 #*.jar
 *.war
 *.ear
+/binaries/
+/target/
