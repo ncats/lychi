@@ -923,9 +923,22 @@ public class LyChIStandardizer {
     public static void preprocessing (final Molecule m) {
         ChemUtil.sanitize(m);
 
+       
+        //preserver H-H, and [H]/[H+] floating atoms
+        Map<MolAtom,Integer> omaps = new HashMap<MolAtom,Integer>();
+        for (MolAtom a : m.getAtomArray()) {
+            if (a.getAtno() == 1){
+            	if(a.getBondCount()<=0 || a.getBond(0).getOtherAtom(a).getAtno()==1){
+            		omaps.put(a, a.getAtomMap());
+            		a.setAtomMap(1);
+            	}
+            }
+        }
         // suppress all hydrogens except for isotopes
         m.hydrogenize(false);
-        m.implicitizeHydrogens(MolAtom.ALL_H & ~MolAtom.ISOTOPE_H);
+        m.implicitizeHydrogens(MolAtom.ALL_H & ~MolAtom.ISOTOPE_H & ~MolAtom.MAPPED_H);
+        
+        omaps.forEach((a,m1)->a.setAtomMap(m1));
 
         List<MolAtom> addH = new ArrayList<MolAtom>();
 
@@ -2862,8 +2875,13 @@ public class LyChIStandardizer {
         // remove any leftover H that didn't get removed 
         // above
         for (MolAtom a : m0.getAtomArray()) {
-            if (a.getAtno() == 1)
-                m0.removeNode(a);
+            if (a.getAtno() == 1){
+            	if(a.getBondCount()>0){
+            		if(a.getBond(0).getOtherAtom(a).getAtno()!=1){
+            			m0.removeNode(a);	
+            		}
+            	}
+            }
         }
 
         Molecule m1 = m0.cloneMolecule();
