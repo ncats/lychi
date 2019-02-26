@@ -333,6 +333,38 @@ public class LychiRegressionTest {
 		tests.add(LychiTestInstance.equivalent("OC1[C@H](O)[C@H](O)C1O","OC1[C@@H](O)[C@@H](O)C1O").name("4-center, 2 specified symmetric meaningful stereo should be same as inverted"));
 		tests.add(LychiTestInstance.notEquivalent("OC1[C@H](O)[C@H](O)C1O","OC1[C@@H](O)[C@H](O)C1O").name("4-center, 2 specified symmetric meaningful stereo should not be same as 1 center modified"));
 		
+
+		//H/nothing tests
+		tests.add(LychiTestInstance.notEquivalent("[2H]","[H]").name("Deuterium should not be the same as hydrogen"));
+		tests.add(LychiTestInstance.notEquivalent("O","[H]").name("Hydrogen is different from water"));
+		tests.add(LychiTestInstance.notEquivalent("\n" + 
+				"  MJ150420                      \n" + 
+				"\n" + 
+				"  0  0  0  0  0  0  0  0  0  0999 V2000\n" + 
+				"M  END","O").name("Water is different from nothing"));
+		
+		
+		tests.add(LychiTestInstance.notEquivalent("\n" + 
+				"  MJ150420                      \n" + 
+				"\n" + 
+				"  0  0  0  0  0  0  0  0  0  0999 V2000\n" + 
+				"M  END","[H]").name("Monatomic Hydrogen is different from nothing"));
+		
+		tests.add(LychiTestInstance.notEquivalent("\n" + 
+				"  MJ150420                      \n" + 
+				"\n" + 
+				"  0  0  0  0  0  0  0  0  0  0999 V2000\n" + 
+				"M  END","[H][H]").name("Diatomic Hydrogen is different from nothing"));
+		
+		
+		tests.add(LychiTestInstance.notEquivalent("\n" + 
+				"  MJ150420                      \n" + 
+				"\n" + 
+				"  0  0  0  0  0  0  0  0  0  0999 V2000\n" + 
+				"M  END","[H+]").name("Proton is different from nothing"));
+		
+		
+		
 		
 		//OC1[C@H](O)[C@H](O)C1O
 		
