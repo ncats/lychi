@@ -29,6 +29,9 @@ public class LychiRegressionTest {
 		String expectedLychi;
 		boolean shouldMatch=true;
 		
+		int layer = 4;
+		
+		
 		
 		public static LychiTestInstance of(String smi, String lychi){
 			LychiTestInstance ltest= new LychiTestInstance();
@@ -51,6 +54,16 @@ public class LychiRegressionTest {
 				throw new RuntimeException(e);
 			}
 		}
+		
+		public LychiTestInstance layer(int layer){
+			this.layer=layer;
+			return this;
+		}
+		
+		public static LychiTestInstance equivalentLayer3(String smi1, String smi2){
+			return equivalent(smi1,smi2).layer(3);
+		}
+		
 		public static LychiTestInstance notEquivalent(String smi1, String smi2){
 			return equivalent(smi1,smi2).negate();
 		}
@@ -86,14 +99,18 @@ public class LychiRegressionTest {
 		this.spec = spec;
 	}
 	
-	public static void basicTest(Molecule m, String expected, boolean match) throws Exception{
+	public static void basicTest(Molecule m, String expected, boolean match, int layerMatch) throws Exception{
 		LyChIStandardizer std = new LyChIStandardizer();
 		std.standardize(m);
 		String fullKey=LyChIStandardizer.hashKey(m);
+		
+		String layer = fullKey.split("-")[layerMatch-1];
+		String expectedLayer = expected.split("-")[layerMatch-1];
+		
 		if(match){
-			assertEquals(expected,fullKey);
+			assertEquals(expectedLayer,layer);
 		}else{
-			assertNotEquals(expected,fullKey);
+			assertNotEquals(expectedLayer,layer);
 		}
 	}
 	
@@ -126,7 +143,7 @@ public class LychiRegressionTest {
 	
 	@Test
 	public void correctLychiFirstTime() throws Exception{
-		basicTest(spec.getMolecule(),spec.expectedLychi, spec.shouldMatch);
+		basicTest(spec.getMolecule(),spec.expectedLychi, spec.shouldMatch, spec.layer);
 	}
 	
 	@Test
@@ -148,7 +165,7 @@ public class LychiRegressionTest {
 			int[] map =iatoms.stream().mapToInt(i1->i1).toArray();
 			Molecule s=shuffleMolecule(m,map);
 			
-			basicTest(s,spec.expectedLychi,spec.shouldMatch);
+			basicTest(s,spec.expectedLychi,spec.shouldMatch, spec.layer);
 		}
 	}
 	
@@ -162,7 +179,7 @@ public class LychiRegressionTest {
 			Collections.shuffle(iatoms);
 			int[] map =iatoms.stream().mapToInt(i1->i1).toArray();
 			Molecule s=shuffleMolecule(m,map);
-			basicTest(s,spec.expectedLychi,spec.shouldMatch);
+			basicTest(s,spec.expectedLychi,spec.shouldMatch, spec.layer);
 			m=s;
 		}
 	}
@@ -359,6 +376,15 @@ public class LychiRegressionTest {
 				"  6  7  1  1  0  0  0\n" + 
 				"  6  8  1  6  0  0  0\n" + 
 				"M  END","C1CCCCC1").name("meaningless stereo 1"));
+		
+		
+		tests.add(LychiTestInstance.equivalentLayer3("[H][C@@](O)(CO)[C@@]([H])(O)[C@]([H])(O)[C@@]([H])(O)C=O", "[H][C@](O)(C=O)[C@@]([H])(O)[C@]([H])(O)[C@]([H])(O)C([2H])([2H])O")
+				                   .name("Hydrogen Isotope Same Layer 3")
+				);
+		
+		
+		tests.add(LychiTestInstance.of("[H][C@](C)(CC)[C@]([H])(NC(=O)[C@]([H])(CCC(O)=O)N=C(O)[C@]([H])(CCC(O)=O)N=C(O)COCCOCCNC(=O)C1=CC2=C(C=C1)C3(OC2=O)C4=C(OC5=C3C=CC(O)=C5)C=C(O)C=C4)C(=O)N[C@@]([H])(CCCC)C(O)=N[C@@]([H])(CCCN=C(N)N)C(O)=N[C@@]([H])(CCCN=C(N)N)C(O)=NCCCOCC(COCCCN=C(O)[C@]([H])(CCCN=C(N)N)N=C(O)[C@]([H])(CCCN=C(N)N)N=C(O)[C@]([H])(CCCC)NC(=O)[C@@]([H])(NC(=O)[C@]([H])(CCC(O)=O)N=C(O)[C@]([H])(CCC(O)=O)N=C(O)COCCOCCNC(=O)C6=CC7=C(C=C6)C8(OC7=O)C9=C(OC%10=C8C=CC(O)=C%10)C=C(O)C=C9)[C@@]([H])(C)CC)(COCCCN=C(O)[C@]([H])(CCCN=C(N)N)N=C(O)[C@]([H])(CCCN=C(N)N)N=C(O)[C@]([H])(CCCC)NC(=O)[C@@]([H])(NC(=O)[C@]([H])(CCC(O)=O)N=C(O)[C@]([H])(CCC(O)=O)N=C(O)COCCOCCNC(=O)C%11=CC%12=C(C=C%11)C%13(OC%12=O)C%14=C(OC%15=C%13C=CC(O)=C%15)C=C(O)C=C%14)[C@@]([H])(C)CC)N=C(N)O","PY2Z7DXNU-UTQVUB5614-U4T1XF2AQV3-U43YSFQF6PCQ").name("big structure"));
+		
 		
 		
 		return tests.stream().map(ls->ls.asJunitInput()).collect(Collectors.toList());

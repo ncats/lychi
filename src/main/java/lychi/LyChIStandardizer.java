@@ -2865,6 +2865,8 @@ public class LyChIStandardizer {
             if (a.getAtno() == 1)
                 m0.removeNode(a);
         }
+        
+      
 
         Molecule m1 = m0.cloneMolecule();
         int[] atno = new int[m0.getAtomCount()];
@@ -2891,9 +2893,18 @@ public class LyChIStandardizer {
 
         int[] rank = new int[atno.length];
         m0.getGrinv(rank);
+       
         for (int i = 0; i < atno.length; ++i) {
-            rank[i] *= atno[i]; // update rank to resolve symmetry
+            rank[i] *= atno[i]*5; // update rank to resolve symmetry
+            rank[i] -= m1.getAtom(i).getImplicitHcount(); // break symmetry when it's based on bond order
         }
+        
+        
+        for (AtomIterator ai =new AtomIterator (m1, rank); ai.hasNext(); ) {
+            MolAtom a = ai.next();            
+        }
+        
+        
 
         for (AtomIterator ai = new AtomIterator (m0, rank); 
              ai.hasNext(); ai.next()) {
@@ -2906,7 +2917,9 @@ public class LyChIStandardizer {
         sb = new StringBuilder ();
         for (AtomIterator ai =new AtomIterator (m1, rank); ai.hasNext(); ) {
             MolAtom a = ai.next();
+            
             sb.append(a.getSymbol()+a.getImplicitHcount());
+            
         }
         // level1: skeleton with atom label
         String level2 = sb.toString();
