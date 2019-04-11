@@ -2777,11 +2777,6 @@ public class LyChIStandardizer {
         }
         
         
-        for (AtomIterator ai =new AtomIterator (m1, rank); ai.hasNext(); ) {
-            MolAtom a = ai.next();            
-        }
-        
-        
 
         for (AtomIterator ai = new AtomIterator (m0, rank); 
              ai.hasNext(); ai.next()) {
