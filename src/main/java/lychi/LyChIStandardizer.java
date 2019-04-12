@@ -2775,8 +2775,7 @@ public class LyChIStandardizer {
         
         for (int i = 0; i < atno.length; ++i) {
             rank[i] *= atno[i]*1204; // update rank to resolve symmetry
-                                    // this is bad, because it actually makes MORE collisions
-            
+                                     // large number to allow small fiddling for tie breaking
         }
         
         for (int i = 0; i < atno.length; ++i) {
