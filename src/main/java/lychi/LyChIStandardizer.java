@@ -2771,10 +2771,30 @@ public class LyChIStandardizer {
         int[] rank = new int[atno.length];
         m0.getGrinv(rank);
        
+        
+        
         for (int i = 0; i < atno.length; ++i) {
-            rank[i] *= atno[i]*5; // update rank to resolve symmetry
-            rank[i] -= m1.getAtom(i).getImplicitHcount(); // break symmetry when it's based on bond order
+            rank[i] *= atno[i]*1204; // update rank to resolve symmetry
+                                    // this is bad, because it actually makes MORE collisions
+            
         }
+        
+        for (int i = 0; i < atno.length; ++i) {
+        	for (int j = i+1; j < atno.length; ++j) {
+        		if(rank[i] == rank[j]){
+        			if(atno[i]!=atno[j]){
+        				rank[i]+=atno[i]*5;
+        				rank[j]+=atno[j]*5;
+        			}
+        		}
+        	}
+        }
+        
+        for(int i=0;i< atno.length;++i){
+        	rank[i] -= m1.getAtom(i).getImplicitHcount(); // break symmetry when it's based on bond order
+        }
+        
+        
         
         
 
