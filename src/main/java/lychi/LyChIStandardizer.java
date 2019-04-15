@@ -2708,6 +2708,31 @@ public class LyChIStandardizer {
         return keys[0]+sep+keys[1]+sep+keys[2]+sep+keys[3];
     }
 
+    
+    private static Molecule getLayer3Equivalent(Molecule m){
+    	 Molecule m0=m.cloneMolecule();
+    	 
+         int[] atno = new int[m0.getAtomCount()];
+         for (int i = 0; i < atno.length; ++i) {
+             MolAtom a = m0.getAtom(i);
+             a.setRadical(0);
+             a.setCharge(0);
+             a.setFlags(0);
+             a.setMassno(0);
+             a.setAtomMap(i+1);
+         }
+         for (MolBond b : m0.getBondArray()) {
+            b.setStereo2Flags(b.getNode1(), b.getNode2(), 0);
+            if(b.isQuery()){ //hack
+            	b.setFlags(1);
+            }
+         }
+         Molecule mout = new Molecule();
+         ChemUtil.canonicalSMILES(mout,m0,false);
+         
+         return mout;
+    }
+    
     /**
      * Extended version of the hash key that includes the topology+label
      *  layer that sits between the first and second layers of previous
@@ -2771,29 +2796,26 @@ public class LyChIStandardizer {
         int[] rank = new int[atno.length];
         m0.getGrinv(rank);
        
+        int[] fallbackLookup = new int[atno.length];
         
+        try{
+        	//set the tie-breaking priority based on the layer-3 information
+	        Molecule stdLychi3Mol=getLayer3Equivalent(m1);
+	        MolAtom[] matarr1=stdLychi3Mol.getAtomArray();
+	        
+	        for (int i = 0; i < atno.length; ++i) {
+	        	fallbackLookup[matarr1[i].getAtomMap()-1]=i;
+	        }
+        }catch(Exception e){
+        	 logger.log(Level.SEVERE, 
+                     "Can't produce simplified structure from molecule", e);
+        }
         
+
         for (int i = 0; i < atno.length; ++i) {
-            rank[i] *= atno[i]*1204; // update rank to resolve symmetry
-                                     // large number to allow small fiddling for tie breaking
+            rank[i] = (rank[i]*atno[i]*2048); // update rank to resolve symmetry
+            rank[i] += fallbackLookup[i]; //tie breaking based on lychi-3 fallback order
         }
-        
-        for (int i = 0; i < atno.length; ++i) {
-        	for (int j = i+1; j < atno.length; ++j) {
-        		if(rank[i] == rank[j]){
-        			if(atno[i]!=atno[j]){
-        				rank[i]+=atno[i]*5;
-        				rank[j]+=atno[j]*5;
-        			}
-        		}
-        	}
-        }
-        
-        for(int i=0;i< atno.length;++i){
-        	rank[i] -= m1.getAtom(i).getImplicitHcount(); // break symmetry when it's based on bond order
-        }
-        
-        
         
         
 
@@ -2824,7 +2846,6 @@ public class LyChIStandardizer {
                         "2: "+level2 + "\n"+
                         "3: "+level3 + "\n");
         }
-
         return hashChain45 (level0, level1, level2, level3);
     }
 
