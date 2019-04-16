@@ -2934,18 +2934,18 @@ public class LyChIStandardizer {
        
         int[] fallbackLookup = new int[atno.length];
         
-        try{
-        	//set the tie-breaking priority based on the layer-3 information
-	        Molecule stdLychi3Mol=getLayer3Equivalent(m1);
-	        MolAtom[] matarr1=stdLychi3Mol.getAtomArray();
-	        
-	        for (int i = 0; i < atno.length; ++i) {
-	        	fallbackLookup[matarr1[i].getAtomMap()-1]=i;
-	        }
-        }catch(Exception e){
-        	 logger.log(Level.SEVERE, 
-                     "Can't produce simplified structure from molecule", e);
-        }
+//        try{
+//        	//set the tie-breaking priority based on the layer-3 information
+//	        Molecule stdLychi3Mol=getLayer3Equivalent(m1);
+//	        MolAtom[] matarr1=stdLychi3Mol.getAtomArray();
+//	        
+//	        for (int i = 0; i < atno.length; ++i) {
+//	        	fallbackLookup[matarr1[i].getAtomMap()-1]=i;
+//	        }
+//        }catch(Exception e){
+//        	 logger.log(Level.SEVERE, 
+//                     "Can't produce simplified structure from molecule", e);
+//        }
         
 
         for (int i = 0; i < atno.length; ++i) {

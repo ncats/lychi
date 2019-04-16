@@ -7,7 +7,7 @@
   <groupId>gov.nih.ncats</groupId>
   <artifactId>lychi</artifactId>
   <packaging>jar</packaging>
-  <version>0.5.1ISOTOPE_AND_SYMMETRY_FIX</version>
+  <version>0.5.1SYMMETRY_FIX</version>
   <name>Lychi</name>
 
   <repositories>
