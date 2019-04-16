@@ -418,7 +418,7 @@ public class LychiRegressionTest {
 		
 		//These are tests that don't pass currently, because they deal
 		//with complex symmetry, should be uncommented later
-		/*
+		
 		tests.add(LychiTestInstance.equivalent("C[C@H]1C[C@@H](C)CC(C)C1","C[C@@H]1C[C@H](C)CC(C)C1")
 								   .name("symmetric half-defined stereo should be the same"));
 		
@@ -427,7 +427,7 @@ public class LychiRegressionTest {
 		
 		tests.add(LychiTestInstance.equivalent("C[C@H]1OC(C)O[C@@H](C)O1","CC1OC(C)OC(C)O1")
 				                   .name("meaningless stereo with 2 dashed bonds on ring shouldn't be honored"));
-		*/
+		
 		
 		
 		
