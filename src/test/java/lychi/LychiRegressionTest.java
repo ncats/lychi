@@ -459,14 +459,14 @@ public class LychiRegressionTest {
 				"M  END","C1CCCCC1").name("meaningless stereo 1"));
 		
 		
-//		tests.add(LychiTestInstance.equivalentLayer3("[H][C@@](O)(CO)[C@@]([H])(O)[C@]([H])(O)[C@@]([H])(O)C=O", "[H][C@](O)(C=O)[C@@]([H])(O)[C@]([H])(O)[C@]([H])(O)C([2H])([2H])O")
-//				                   .name("Hydrogen Isotope Same Layer 3")
-//				);
-//		
-//
-//		tests.add(LychiTestInstance.equivalentLayer3("[H][C@]1(CC(O)=O)CCC2=C1N(CC3=CC=C(Cl)C=C3)C4=C2C=C(F)C=C4S(C)(=O)=O", "CS(=O)(=O)C1=CC(F)=CC2=C1N(CC3=CC=C(Cl)C=C3)C4=C2CCC4CC(O)=O")
-//                                   .name("Strange graph invariant problem")
-//				);
+		tests.add(LychiTestInstance.equivalentLayer3("[H][C@@](O)(CO)[C@@]([H])(O)[C@]([H])(O)[C@@]([H])(O)C=O", "[H][C@](O)(C=O)[C@@]([H])(O)[C@]([H])(O)[C@]([H])(O)C([2H])([2H])O")
+				                   .name("Hydrogen Isotope Same Layer 3")
+				);
+		
+
+		tests.add(LychiTestInstance.equivalentLayer3("[H][C@]1(CC(O)=O)CCC2=C1N(CC3=CC=C(Cl)C=C3)C4=C2C=C(F)C=C4S(C)(=O)=O", "CS(=O)(=O)C1=CC(F)=CC2=C1N(CC3=CC=C(Cl)C=C3)C4=C2CCC4CC(O)=O")
+                                   .name("Strange graph invariant problem")
+				);
 		
 		
 		//tests.add(LychiTestInstance.of("[H][C@](C)(CC)[C@]([H])(NC(=O)[C@]([H])(CCC(O)=O)N=C(O)[C@]([H])(CCC(O)=O)N=C(O)COCCOCCNC(=O)C1=CC2=C(C=C1)C3(OC2=O)C4=C(OC5=C3C=CC(O)=C5)C=C(O)C=C4)C(=O)N[C@@]([H])(CCCC)C(O)=N[C@@]([H])(CCCN=C(N)N)C(O)=N[C@@]([H])(CCCN=C(N)N)C(O)=NCCCOCC(COCCCN=C(O)[C@]([H])(CCCN=C(N)N)N=C(O)[C@]([H])(CCCN=C(N)N)N=C(O)[C@]([H])(CCCC)NC(=O)[C@@]([H])(NC(=O)[C@]([H])(CCC(O)=O)N=C(O)[C@]([H])(CCC(O)=O)N=C(O)COCCOCCNC(=O)C6=CC7=C(C=C6)C8(OC7=O)C9=C(OC%10=C8C=CC(O)=C%10)C=C(O)C=C9)[C@@]([H])(C)CC)(COCCCN=C(O)[C@]([H])(CCCN=C(N)N)N=C(O)[C@]([H])(CCCN=C(N)N)N=C(O)[C@]([H])(CCCC)NC(=O)[C@@]([H])(NC(=O)[C@]([H])(CCC(O)=O)N=C(O)[C@]([H])(CCC(O)=O)N=C(O)COCCOCCNC(=O)C%11=CC%12=C(C=C%11)C%13(OC%12=O)C%14=C(OC%15=C%13C=CC(O)=C%15)C=C(O)C=C%14)[C@@]([H])(C)CC)N=C(N)O","PY2Z7DXNU-UTQVUB5614-U4T1XF2AQV3-U43YSFQF6PCQ").name("big structure"));
