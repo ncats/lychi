@@ -204,9 +204,64 @@ public class LychiRegressionTest {
 		
 		tests.add(LychiTestInstance.of("CN(C)CCOC(C1=CC=CC=C1)C2=CC=CC=C2","SG1MX4TJL-LRQMG7F9KY-LYVJD4DSRGU-LYU23YRCSQTR").name("test lychi change"));
 		
+		tests.add(LychiTestInstance.equivalent("CC(C)(C)C1CCC2(CC1)CCN(CCCN3CCOCC3)CC2","NCGC00013953\n" + 
+				"  -IDBS-  1129050841\n\n" + 
+				" 24 26  0  0  0  0  0  0  0  0999 V2000\n" + 
+				"    0.2296   -3.5406    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"   -0.5954   -3.5406    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"   -1.4204   -3.5406    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"   -0.5954   -4.3656    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"   -0.5954   -2.7156    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"    0.1191   -2.3031    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"    0.1191   -1.4781    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"   -0.5954   -1.0656    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"   -1.3099   -1.4781    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"   -1.3099   -2.3031    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"    0.1191   -0.6531    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"    0.1191    0.1719    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"   -0.5954    0.5844    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"   -0.5954    1.4094    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"    0.1191    1.8219    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"    0.1191    2.6469    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"    0.8335    3.0594    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"    1.5480    2.6469    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"    2.2625    3.0594    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"    2.2625    3.8844    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"    1.5480    4.2969    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"    0.8335    3.8844    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"   -1.3099    0.1719    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"   -1.3099   -0.6531    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+				"  1  2  1  0     0  0\n" + 
+				"  2  3  1  0     0  0\n" + 
+				"  2  4  1  0     0  0\n" + 
+				"  5  2  1  1     0  0\n" + 
+				"  5  6  1  0     0  0\n" + 
+				"  6  7  1  0     0  0\n" + 
+				"  8  7  1  6     0  0\n" + 
+				"  8  9  1  0     0  0\n" + 
+				"  9 10  1  0     0  0\n" + 
+				"  5 10  1  0     0  0\n" + 
+				"  8 11  1  0     0  0\n" + 
+				" 11 12  1  0     0  0\n" + 
+				" 12 13  1  0     0  0\n" + 
+				" 13 14  1  0     0  0\n" + 
+				" 14 15  1  0     0  0\n" + 
+				" 15 16  1  0     0  0\n" + 
+				" 16 17  1  0     0  0\n" + 
+				" 17 18  1  0     0  0\n" + 
+				" 18 19  1  0     0  0\n" + 
+				" 19 20  1  0     0  0\n" + 
+				" 20 21  1  0     0  0\n" + 
+				" 21 22  1  0     0  0\n" + 
+				" 17 22  1  0     0  0\n" + 
+				" 13 23  1  0     0  0\n" + 
+				" 23 24  1  0     0  0\n" + 
+				"  8 24  1  0     0  0\n" + 
+				"M  END").name("spiro stereo without meaning should not change lychi"));
 		
-		tests.add(LychiTestInstance.equivalentLayer3("CC(C)(CO)[C@@H](O)C(=O)NCCC(O)=O","CC(C)(CO)[CH](O)C(=O)NCCC(O)=O").name("layer 3 the same when only stereo changes"));
-		tests.add(LychiTestInstance.equivalentLayer3("CCCCCCCCCCCCCC.CC(C)(CO)[C@@H](O)C(=O)NCCC(O)=O","CCCCCCCCCCCCCC.CC(C)(CO)[CH](O)C(=O)NCCC(O)=O").name("rare salt should be stripped, regardless of stereo"));
+		
+		//tests.add(LychiTestInstance.equivalentLayer3("CC(C)(CO)[C@@H](O)C(=O)NCCC(O)=O","CC(C)(CO)[CH](O)C(=O)NCCC(O)=O").name("layer 3 the same when only stereo changes"));
+		//tests.add(LychiTestInstance.equivalentLayer3("CCCCCCCCCCCCCC.CC(C)(CO)[C@@H](O)C(=O)NCCC(O)=O","CCCCCCCCCCCCCC.CC(C)(CO)[CH](O)C(=O)NCCC(O)=O").name("rare salt should be stripped, regardless of stereo"));
 		
 		tests.add(LychiTestInstance.of("[H][C@@]12[C@@H]3SC[C@]4(NCCC5=C4C=C(OC)C(O)=C5)C(=O)OC[C@H](N1[C@@H](O)[C@@H]6CC7=C([C@H]2N6C)C(O)=C(OC)C(C)=C7)C8=C9OCOC9=C(C)C(OC(C)=O)=C38", "DCLRH149F-FFMPLZ16VC-FC35942KGAU-FCUDSDS2V1NT").name("round trip problem"));
 		
@@ -418,7 +473,7 @@ public class LychiRegressionTest {
 		
 		//These are tests that don't pass currently, because they deal
 		//with complex symmetry, should be uncommented later
-		/*
+		
 		tests.add(LychiTestInstance.equivalent("C[C@H]1C[C@@H](C)CC(C)C1","C[C@@H]1C[C@H](C)CC(C)C1")
 								   .name("symmetric half-defined stereo should be the same"));
 		
@@ -427,7 +482,8 @@ public class LychiRegressionTest {
 		
 		tests.add(LychiTestInstance.equivalent("C[C@H]1OC(C)O[C@@H](C)O1","CC1OC(C)OC(C)O1")
 				                   .name("meaningless stereo with 2 dashed bonds on ring shouldn't be honored"));
-		*/
+		
+		
 		
 		
 		
