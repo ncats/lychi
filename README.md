@@ -1,18 +1,28 @@
 LyChI (Layered Chemical Identifier)
 ===================================
 
-This directory contains code for BARD structure standardizer. To build
-simply type
+This directory contains code for BARD/GSRS structure standardizer and hash-code generator. 
+
+To build simply type:
 
 ```
-ant
+bash make.sh
 ```
 
-To build a self-contained jar with dependencies included, use `ant
-all` instead. The self-contained jar file can be invoked directly;
-e.g., 
+You will need to have maven installed. Inside the `make.sh` script it simply adds the dependencies and calls `mvn clean package`.
+
+
+This will build 2 jar files (one with dependencies and one without). They can be located in the `target` directory, and will look like:
 
 ```
-java -jar dist/lychi-all-v0.1.jar tests/standardizer_case1.smi
+target/lychi-0.5.1.jar  
+target/lychi-0.5.1-jar-with-dependencies.jar
 ```
+
+The self-contained jar file can be invoked directly. For example:
+
+```
+java -jar target/lychi-0.5.1-jar-with-dependencies.jar tests/standardizer_case1.smi
+```
+
 
