@@ -2778,11 +2778,11 @@ public class LyChIStandardizer {
             for (; round < MAX_ROUND; ++round) {
                 int p = round - 1;
                 for (int i = 0; i < atno.length; ++i) {
-                    MolAtom a = m0.getAtom(i);
+                    MolAtom a = m1.getAtom(i);
                     int ha = hash[p][i];
                     for (int j = 0; j < a.getBondCount(); ++j) {
                         MolAtom xa = a.getBond(j).getOtherAtom(a);
-                        int k = m0.indexOf(xa);
+                        int k = m1.indexOf(xa);
                         ha += (a.getBond(j).getType() << xa.getImplicitHcount())
                             + hash[p][k];
                     }
