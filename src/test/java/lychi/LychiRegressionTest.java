@@ -209,6 +209,20 @@ public class LychiRegressionTest {
 //                				   .name("legacy consistency test 3"));
 		
 		
+		//C1CCNCC1.C2CCN=CC2
+		
+		//CC1CCC=NC1.CN2CCCCC2
+		
+		tests.add(LychiTestInstance.equivalent("CC1CCC=NC1","CN2CCCCC2")
+				.layer(1)
+				.name("Bond order and label change has same layer 1"));
+		
+		
+		tests.add(LychiTestInstance.equivalent("C1CCNCC1","C2CCN=CC2")
+				.layer(2)
+				.name("Bond order change gives same layer 2"));
+		
+		
 		tests.add(LychiTestInstance.notEquivalent("C[C@@H]1CC[C@@H](C)CC1","C[C@H]1CC[C@@H](C)CC1").name("trans across ring"));
 		tests.add(LychiTestInstance.equivalentLayer3("C[C@@H]1CC[C@@H](C)CC1","C[C@H]1CC[C@@H](C)CC1").name("cis across ring"));
 		
