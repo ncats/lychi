@@ -19,7 +19,7 @@ public class AtomIterator implements ListIterator<MolAtom> {
     Logger.getLogger(AtomIterator.class.getName());
 
     static class IntPair implements Comparable<IntPair> {
-    int index, value;
+        int index, value;
         IntPair (int index, int value) {
             this.index = index;
             this.value = value;

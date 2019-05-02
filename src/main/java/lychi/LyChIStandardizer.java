@@ -1174,7 +1174,7 @@ public class LyChIStandardizer {
             int oi=me.getValue();
             int ni=m.getChirality(i);
             if(oi!=ni){
-            	logger.warning("The stereo on atom " + i + " may have changed chirality during standardization!");
+                logger.warning("The stereo on atom " + i + " may have changed chirality during standardization!");
             }
         }
 
@@ -2767,12 +2767,44 @@ public class LyChIStandardizer {
         StringBuilder sb = new StringBuilder ();
         // level1: topology+atom label
 
-        int[] rank = new int[atno.length];
+        int[] rank;
+        {
+            int MAX_ROUND = 13;
+            int[][] hash = new int[MAX_ROUND][atno.length];
+            for (int i = 0; i < atno.length; ++i)
+                hash[0][i] = atno[i];
+            
+            int round = 1;
+            for (; round < MAX_ROUND; ++round) {
+                int p = round - 1;
+                for (int i = 0; i < atno.length; ++i) {
+                    MolAtom a = m0.getAtom(i);
+                    int ha = hash[p][i];
+                    for (int j = 0; j < a.getBondCount(); ++j) {
+                        MolAtom xa = a.getBond(j).getOtherAtom(a);
+                        int k = m0.indexOf(xa);
+                        ha += (a.getBond(j).getType() << xa.getImplicitHcount())
+                            + hash[p][k];
+                    }
+                    if (ha < 0) {
+                        if (DEBUG) {
+                            logger.log(Level.SEVERE,
+                                       "OVERFLOW AT ITERATION "+round+"!");
+                        }
+                        ha = hash[round-1][i];
+                    }
+                    hash[round][i] = ha;
+                }
+            }
+            rank = hash[round-1];
+        }
+        /*
         m0.getGrinv(rank);
         for (int i = 0; i < atno.length; ++i) {
             rank[i] *= atno[i]; // update rank to resolve symmetry
         }
-
+        */
+        
         for (AtomIterator ai = new AtomIterator (m0, rank); 
              ai.hasNext(); ai.next()) {
             int index = ai.nextIndex();
@@ -2786,11 +2818,12 @@ public class LyChIStandardizer {
             MolAtom a = ai.next();
             sb.append(a.getSymbol()+a.getImplicitHcount());
         }
-        // level1: skeleton with atom label
         String level2 = sb.toString();
 
         // level2: full canonical smiles with stereo/isotope/charge...
         String level3 = molstr;
+
+        String[] hkeys = hashChain45 (level0, level1, level2, level3);
         if (DEBUG) {
             logger.info("hash layers:\n"+
                         "0: "+level0 + "\n"+
@@ -2799,7 +2832,7 @@ public class LyChIStandardizer {
                         "3: "+level3 + "\n");
         }
 
-        return hashChain45 (level0, level1, level2, level3);
+        return hkeys;
     }
 
     static String[] hashChain45 (String... strs) {
