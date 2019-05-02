@@ -2946,12 +2946,19 @@ public class LyChIStandardizer {
         	 logger.log(Level.SEVERE, 
                      "Can't produce simplified structure from molecule", e);
         }
-        
 
+        
+        //System.out.println(molstr);
         for (int i = 0; i < atno.length; ++i) {
-            rank[i] = (rank[i]*atno[i]*2048); // update rank to resolve symmetry
+            rank[i] = (rank[i]*2048); // update rank to resolve symmetry
+            
+            
+            
             rank[i] += fallbackLookup[i]; //tie breaking based on lychi-3 fallback order
+            
+            
         }
+       // System.out.println(Arrays.toString(rank));
         
         
 
@@ -2972,6 +2979,7 @@ public class LyChIStandardizer {
         }
         // level1: skeleton with atom label
         String level2 = sb.toString();
+        System.out.println(level2);
 
         // level2: full canonical smiles with stereo/isotope/charge...
         String level3 = molstr;

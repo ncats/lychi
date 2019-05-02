@@ -263,7 +263,8 @@ public class LychiRegressionTest {
 		//tests.add(LychiTestInstance.equivalentLayer3("CC(C)(CO)[C@@H](O)C(=O)NCCC(O)=O","CC(C)(CO)[CH](O)C(=O)NCCC(O)=O").name("layer 3 the same when only stereo changes"));
 		//tests.add(LychiTestInstance.equivalentLayer3("CCCCCCCCCCCCCC.CC(C)(CO)[C@@H](O)C(=O)NCCC(O)=O","CCCCCCCCCCCCCC.CC(C)(CO)[CH](O)C(=O)NCCC(O)=O").name("rare salt should be stripped, regardless of stereo"));
 		
-		tests.add(LychiTestInstance.of("[H][C@@]12[C@@H]3SC[C@]4(NCCC5=C4C=C(OC)C(O)=C5)C(=O)OC[C@H](N1[C@@H](O)[C@@H]6CC7=C([C@H]2N6C)C(O)=C(OC)C(C)=C7)C8=C9OCOC9=C(C)C(OC(C)=O)=C38", "DCLRH149F-FFMPLZ16VC-FC35942KGAU-FCUDSDS2V1NT").name("round trip problem"));
+		tests.add(LychiTestInstance.equivalent("[H][C@@]12[C@@H]3SC[C@]4(NCCC5=C4C=C(OC)C(O)=C5)C(=O)OC[C@H](N1[C@@H](O)[C@@H]6CC7=C([C@H]2N6C)C(O)=C(OC)C(C)=C7)C8=C9OCOC9=C(C)C(OC(C)=O)=C38", "[H][C@@]12[C@@H]3SC[C@]4(NCCC5=C4C=C(OC)C(O)=C5)C(=O)OC[C@H](N1[C@@H](O)[C@@H]6CC7=C([C@H]2N6C)C(O)=C(OC)C(C)=C7)C8=C9OCOC9=C(C)C(OC(C)=O)=C38")
+				                   .name("round trip problem"));
 		
 		
 		tests.add(LychiTestInstance.of("[Na+].[Na+].[Na+].[Na+].[O-]P([O-])(=O)OP([O-])([O-])=O", "U42VPKYB8-83HRLLLGLV-8VMGB3AAA1L-8VLXF4WDFH73")
@@ -483,7 +484,11 @@ public class LychiRegressionTest {
 		tests.add(LychiTestInstance.equivalent("C[C@H]1OC(C)O[C@@H](C)O1","CC1OC(C)OC(C)O1")
 				                   .name("meaningless stereo with 2 dashed bonds on ring shouldn't be honored"));
 		
+		tests.add(LychiTestInstance.equivalentLayer3("C1CN(CCN1)C2=CC=C(C=C2)C3=CN4N=CC(=C4N=C3)C5=CC=CC6=C5C=CC=N6","C1CN(CCN1)C2=CC=C(C=C2)C3=CN4N=CC(=C4N=C3)C5=CC=NC6=C5C=CC=C6")
+				 .negate()
+                 .name("Constitutional Isomer Not Equivalent on Layer 3"));
 		
+		//C1CN(CCN1)C2=CC=C(C=C2)C3=CN4N=CC(=C4N=C3)C5=CC=CC6=C5C=CC=N6.C1CN(CCN1)C2=CC=C(C=C2)C3=CN4N=CC(=C4N=C3)C5=CC=NC6=C5C=CC=C6
 		
 		
 		
