@@ -2869,6 +2869,58 @@ public class LyChIStandardizer {
          return mout;
     }
     
+    private static Molecule getLayer2Equivalent(Molecule m){
+   	 Molecule m0=m.cloneMolecule();
+   	 
+        int[] atno = new int[m0.getAtomCount()];
+        for (int i = 0; i < atno.length; ++i) {
+            MolAtom a = m0.getAtom(i);
+            a.setRadical(0);
+            a.setCharge(0);
+            a.setFlags(0);
+            a.setMassno(0);
+            a.setAtomMap(i+1);
+        }
+        for (MolBond b : m0.getBondArray()) {
+           b.setStereo2Flags(b.getNode1(), b.getNode2(), 0);
+           if(b.isQuery()){ //hack
+           	b.setFlags(1);
+           }
+           b.setType(1);    //force single
+        }
+        Molecule mout = new Molecule();
+        ChemUtil.canonicalSMILES(mout,m0,false);
+        
+        return mout;
+   }
+    
+    private static Molecule getLayer1Equivalent(Molecule m){
+      	 Molecule m0=m.cloneMolecule();
+      	 
+           int[] atno = new int[m0.getAtomCount()];
+           for (int i = 0; i < atno.length; ++i) {
+               MolAtom a = m0.getAtom(i);
+               a.setRadical(0);
+               a.setCharge(0);
+               a.setFlags(0);
+               a.setMassno(0);
+               a.setAtno(6);
+               a.setAtomMap(i+1);
+           }
+           for (MolBond b : m0.getBondArray()) {
+              b.setStereo2Flags(b.getNode1(), b.getNode2(), 0);
+              if(b.isQuery()){ //hack
+              	b.setFlags(1);
+              }
+              b.setType(1);    //force single
+           }
+           Molecule mout = new Molecule();
+           ChemUtil.canonicalSMILES(mout,m0,false);
+           
+           return mout;
+      }
+    
+    
 
     /**
      * Takes an int array and replaces each value with the position it would have in a sorted
@@ -2933,6 +2985,13 @@ public class LyChIStandardizer {
             if (a.getAtno() == 1)
                 m0.removeNode(a);
         }
+        
+//        String molstr1=ChemUtil.canonicalSMILES(getLayer1Equivalent(m0));
+//        String molstr2=ChemUtil.canonicalSMILES(getLayer2Equivalent(m0));
+//        String molstr3=ChemUtil.canonicalSMILES(getLayer3Equivalent(m0));
+//        
+//        
+//        return hashChain45 (molstr1, molstr2, molstr3, molstr);
         
       
 
