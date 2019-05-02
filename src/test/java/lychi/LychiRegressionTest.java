@@ -197,12 +197,22 @@ public class LychiRegressionTest {
 	public static List<Object[]> data(){
 		List<LychiTestInstance> tests = new ArrayList<>();
 		
-		tests.add(LychiTestInstance.of("CCCCCC","U28WVSD82-2YWKXKS36P-2PQPUKLGUWW-2PWK7BQNJSU6").name("simple carbon chain"));
-		tests.add(LychiTestInstance.of("O=C(O[C@H]1C[C@H]2C[C@H]3C[C@@H](C1)N2CC3=O)C4=CNC5=C4C=CC=C5","38C4U16JU-UC5KDUPMVH-UHFJLJL661C-UHCRHDK74DXU").name("cage-like structure"));
-		tests.add(LychiTestInstance.of("C[C@@H]1CC[C@@H](C)CC1","T75RBW5S8-8D9T563A7Y-8YC8NQXD9W5-8Y5MFVTVS3J3").name("trans across ring"));
-		tests.add(LychiTestInstance.of("C[C@H]1CC[C@@H](C)CC1","T75RBW5S8-8D9T563A7Y-8YC8NQXD9W5-8Y5JH5RWXRLR").name("cis across ring"));
+//		tests.add(LychiTestInstance.of("CCCCCC","U28WVSD82-2YWKXKS36P-2PQPUKLGUWW-2PWK7BQNJSU6").name("simple carbon chain"));
+//		tests.add(LychiTestInstance.of("O=C(O[C@H]1C[C@H]2C[C@H]3C[C@@H](C1)N2CC3=O)C4=CNC5=C4C=CC=C5","38C4U16JU-UC5KDUPMVH-UHFJLJL661C-UHCRHDK74DXU").name("cage-like structure"));
+//		tests.add(LychiTestInstance.of("CN(C)CCOC(C1=CC=CC=C1)C2=CC=CC=C2","SG1MX4TJL-LRQMG7F9KY-LYVJD4DSRGU-LYU23YRCSQTR").name("test lychi change"));
+//		
+//		tests.add(LychiTestInstance.of("[Na+].[Na+].[Na+].[Na+].[O-]P([O-])(=O)OP([O-])([O-])=O", "U42VPKYB8-83HRLLLGLV-8VMGB3AAA1L-8VLXF4WDFH73")
+//				                   .name("legacy consistency test 1"));
+//		tests.add(LychiTestInstance.of("CC(C)NCC(O)COC1=CC=C(CCOCC2CC2)C=C1", "19W74QJNW-WXMWMLXXWD-WDPBV6R9GFJ-WDJKLYLWS5JW")
+//                                   .name("legacy consistency test 2"));
+//		tests.add(LychiTestInstance.of("CC1=C(CC(O)=O)C2=C(C=CC(F)=C2)\\C1=C/C3=CC=C(C=C3)S(C)(=O)=O", "4D13QHCQ6-6CKUM1H2QX-6XM1AWY81DJ-6XJV527T8L5X")
+//                				   .name("legacy consistency test 3"));
 		
-		tests.add(LychiTestInstance.of("CN(C)CCOC(C1=CC=CC=C1)C2=CC=CC=C2","SG1MX4TJL-LRQMG7F9KY-LYVJD4DSRGU-LYU23YRCSQTR").name("test lychi change"));
+		
+		tests.add(LychiTestInstance.notEquivalent("C[C@@H]1CC[C@@H](C)CC1","C[C@H]1CC[C@@H](C)CC1").name("trans across ring"));
+		tests.add(LychiTestInstance.equivalentLayer3("C[C@@H]1CC[C@@H](C)CC1","C[C@H]1CC[C@@H](C)CC1").name("cis across ring"));
+		
+		
 		
 		tests.add(LychiTestInstance.equivalent("CC(C)(C)C1CCC2(CC1)CCN(CCCN3CCOCC3)CC2","NCGC00013953\n" + 
 				"  -IDBS-  1129050841\n\n" + 
@@ -266,13 +276,7 @@ public class LychiRegressionTest {
 		tests.add(LychiTestInstance.equivalent("[H][C@@]12[C@@H]3SC[C@]4(NCCC5=C4C=C(OC)C(O)=C5)C(=O)OC[C@H](N1[C@@H](O)[C@@H]6CC7=C([C@H]2N6C)C(O)=C(OC)C(C)=C7)C8=C9OCOC9=C(C)C(OC(C)=O)=C38", "[H][C@@]12[C@@H]3SC[C@]4(NCCC5=C4C=C(OC)C(O)=C5)C(=O)OC[C@H](N1[C@@H](O)[C@@H]6CC7=C([C@H]2N6C)C(O)=C(OC)C(C)=C7)C8=C9OCOC9=C(C)C(OC(C)=O)=C38")
 				                   .name("round trip problem"));
 		
-		
-		tests.add(LychiTestInstance.of("[Na+].[Na+].[Na+].[Na+].[O-]P([O-])(=O)OP([O-])([O-])=O", "U42VPKYB8-83HRLLLGLV-8VMGB3AAA1L-8VLXF4WDFH73")
-				                   .name("legacy consistency test 1"));
-		tests.add(LychiTestInstance.of("CC(C)NCC(O)COC1=CC=C(CCOCC2CC2)C=C1", "19W74QJNW-WXMWMLXXWD-WDPBV6R9GFJ-WDJKLYLWS5JW")
-                                   .name("legacy consistency test 2"));
-		tests.add(LychiTestInstance.of("CC1=C(CC(O)=O)C2=C(C=CC(F)=C2)\\C1=C/C3=CC=C(C=C3)S(C)(=O)=O", "4D13QHCQ6-6CKUM1H2QX-6XM1AWY81DJ-6XJV527T8L5X")
-                				   .name("legacy consistency test 3"));
+	
 		
 		
 		

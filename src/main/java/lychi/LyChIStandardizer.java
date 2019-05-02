@@ -2869,6 +2869,36 @@ public class LyChIStandardizer {
          return mout;
     }
     
+
+    /**
+     * Takes an int array and replaces each value with the position it would have in a sorted
+     * unique list.
+     * 
+     * For example:
+     * [4,2,1,10,42234,1,42234]  
+     * 
+     * would become:
+     * 
+     * [2,1,0,3,4,0,4]
+     * 
+     * 
+     * @param rank
+     */
+    public static void normalizeRanks(int[] rank){
+
+        int[] last=new int[]{-1, -1};
+        IntStream.range(0, rank.length)
+        	.mapToObj(i->new int[]{i,rank[i]})
+        	.sorted((a,b)->b[1]-a[1])
+        	.forEach(ab->{
+        		if(last[1]!=ab[1]){
+        			last[0]++;
+        			last[1]=ab[1];
+        		}
+        		rank[ab[0]]=last[0];
+        	});
+    }
+    
     /**
      * Extended version of the hash key that includes the topology+label
      *  layer that sits between the first and second layers of previous
@@ -2929,11 +2959,8 @@ public class LyChIStandardizer {
         StringBuilder sb = new StringBuilder ();
         // level1: topology+atom label
 
-        int[] rank = new int[atno.length];
-        m0.getGrinv(rank);
-       
+             
         int[] fallbackLookup = new int[atno.length];
-        
         try{
         	//set the tie-breaking priority based on the layer-3 information
 	        Molecule stdLychi3Mol=getLayer3Equivalent(m1);
@@ -2946,18 +2973,49 @@ public class LyChIStandardizer {
         	 logger.log(Level.SEVERE, 
                      "Can't produce simplified structure from molecule", e);
         }
-
         
-        //System.out.println(molstr);
-        for (int i = 0; i < atno.length; ++i) {
-            rank[i] = (rank[i]*2048); // update rank to resolve symmetry
-            
-            
-            
-            rank[i] += fallbackLookup[i]; //tie breaking based on lychi-3 fallback order
-            
-            
+//        int[] rank = new int[atno.length];
+//        m0.getGrinv(rank);
+        
+        
+        int[] rank;
+        {
+            int MAX_ROUND = 13;
+            int[][] hash = new int[MAX_ROUND][atno.length];
+            for (int i = 0; i < atno.length; ++i)
+                hash[0][i] = 1;
+
+            int round = 1;
+            for (; round < MAX_ROUND; ++round) {
+                int p = round - 1;
+                for (int i = 0; i < atno.length; ++i) {
+                    MolAtom a = m0.getAtom(i);
+                    int ha = hash[p][i];
+                    for (int j = 0; j < a.getBondCount(); ++j) {
+                        MolAtom xa = a.getBond(j).getOtherAtom(a);
+                        int k = m0.indexOf(xa);
+                        ha += (1 << xa.getBondCount()) + hash[p][k];
+                    }
+                    if (ha < 0) {
+                        if (DEBUG) {
+                            logger.log(Level.SEVERE,
+                                       "OVERFLOW AT ITERATION "+round+"!");
+                        }
+                        ha = hash[round-1][i];
+                    }
+                    hash[round][i] = ha;
+                }
+                normalizeRanks(hash[round]);
+            }
+            rank = hash[round-1];
         }
+        
+        
+        for (int i = 0; i < atno.length; ++i) {
+           rank[i] = (rank[i]*2048); // update rank to resolve symmetry
+           rank[i] += fallbackLookup[i]; //tie breaking based on lychi-3 fallback order            
+        }
+        
        // System.out.println(Arrays.toString(rank));
         
         
@@ -2979,7 +3037,6 @@ public class LyChIStandardizer {
         }
         // level1: skeleton with atom label
         String level2 = sb.toString();
-        System.out.println(level2);
 
         // level2: full canonical smiles with stereo/isotope/charge...
         String level3 = molstr;
