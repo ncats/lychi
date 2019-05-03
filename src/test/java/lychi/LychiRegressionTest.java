@@ -213,6 +213,13 @@ public class LychiRegressionTest {
 		
 		//CC1CCC=NC1.CN2CCCCC2
 		
+		//C1CNC=NC1	null	89PQ2A6F3-3YP3KUHJB2-327C672T4UY-32Y8FMA9NT4T
+		//C1CC=NCN1	null	89PQ2A6F3-3Y4RF1LMSJ-3JHRC7TP268-3J8QGY5AGS5T
+
+		tests.add(LychiTestInstance.equivalent("C1CNC=NC1","C1CC=NCN1")
+				.layer(2)
+				.name("Bond order migration on symmetrical structure gives same layer 2"));
+		
 		tests.add(LychiTestInstance.equivalent("CC1CCC=NC1","CN2CCCCC2")
 				.layer(1)
 				.name("Bond order and label change has same layer 1"));

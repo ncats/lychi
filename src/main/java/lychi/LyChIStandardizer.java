@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2952,6 +2953,69 @@ public class LyChIStandardizer {
     }
     
     /**
+     * Simple morgan's algorithm for graph invariants. This requires k*N operations
+     * where k is a constant that is large enough to "absorb" the whole graph (13 here).
+     * 
+     * @param m
+     * @return
+     */
+    public static long[] morgans(Molecule m){
+    	int MAX_ROUND = 13;
+    	int[] atno = new int[m.getAtomCount()];
+        for (int i = 0; i < atno.length; ++i) {
+            MolAtom a = m.getAtom(i);
+            atno[i]=a.getAtno();
+        }
+        long[] rank;
+        {
+            
+            long[][] hash = new long[MAX_ROUND][atno.length];
+            for (int i = 0; i < atno.length; ++i)
+                hash[0][i] = atno[i];
+
+            int round = 1;
+            for (; round < MAX_ROUND; ++round) {
+                int p = round - 1;
+                for (int i = 0; i < atno.length; ++i) {
+                    MolAtom a = m.getAtom(i);
+                    long ha = hash[p][i];
+                    for (int j = 0; j < a.getBondCount(); ++j) {
+                        MolAtom xa = a.getBond(j).getOtherAtom(a);
+                        int k = m.indexOf(xa);
+                        ha +=  ha += (a.getBond(j).getType() << xa.getImplicitHcount())
+                                + hash[p][k];
+                    }
+                    if (ha < 0) {
+                        if (DEBUG) {
+                            logger.log(Level.SEVERE,
+                                       "OVERFLOW AT ITERATION "+round+"!");
+                        }
+                        ha = hash[round-1][i];
+                    }
+                    hash[round][i] = ha;
+                }
+            }
+            rank = hash[round-1];
+        }
+        return rank;
+    }
+    
+    /**
+     * Return the morgan's algorithm values as a sorted list, encoded
+     * as a string. 
+     * @param m
+     * @return
+     */
+    public static String morgansAsString(Molecule m){
+    	long[] order = Arrays.stream(morgans(m))
+    			             .sorted()
+    			             .toArray();
+    	
+    	String s=new BigInteger(BitSet.valueOf(order).toByteArray()).toString(64);
+    	return s;
+    }
+    
+    /**
      * Extended version of the hash key that includes the topology+label
      *  layer that sits between the first and second layers of previous
      *  key.
@@ -2986,127 +3050,12 @@ public class LyChIStandardizer {
                 m0.removeNode(a);
         }
         
-//        String molstr1=ChemUtil.canonicalSMILES(getLayer1Equivalent(m0));
-//        String molstr2=ChemUtil.canonicalSMILES(getLayer2Equivalent(m0));
-//        String molstr3=ChemUtil.canonicalSMILES(getLayer3Equivalent(m0));
-//        
-//        
-//        return hashChain45 (molstr1, molstr2, molstr3, molstr);
-        
-      
-
-        Molecule m1 = m0.cloneMolecule();
-        int[] atno = new int[m0.getAtomCount()];
-        for (int i = 0; i < atno.length; ++i) {
-            MolAtom a = m0.getAtom(i);
-            atno[i] = a.getAtno();
-            a.setAtno(6);
-            a.setRadical(0);
-            a.setCharge(0);
-            a.setFlags(0);
-            a.setMassno(0);
-        }
-
-        for (MolBond b : m0.getBondArray()) {
-            b.setFlags(0);
-            b.setType(1);
-        }
-
-        // level0: molecular skeleton...
-        String level0 = ChemUtil.canonicalSMILES (m0, false);
-
-        StringBuilder sb = new StringBuilder ();
-        // level1: topology+atom label
-
-             
-        int[] fallbackLookup = new int[atno.length];
-        try{
-        	//set the tie-breaking priority based on the layer-3 information
-	        Molecule stdLychi3Mol=getLayer3Equivalent(m1);
-	        MolAtom[] matarr1=stdLychi3Mol.getAtomArray();
-	        
-	        for (int i = 0; i < atno.length; ++i) {
-	        	fallbackLookup[matarr1[i].getAtomMap()-1]=i;
-	        }
-        }catch(Exception e){
-        	 logger.log(Level.SEVERE, 
-                     "Can't produce simplified structure from molecule", e);
-        }
-        
-//        int[] rank = new int[atno.length];
-//        m0.getGrinv(rank);
+        String molstr1=morgansAsString(getLayer1Equivalent(m0));
+        String molstr2=morgansAsString(getLayer2Equivalent(m0));
+        String molstr3=morgansAsString(getLayer3Equivalent(m0));
         
         
-        int[] rank;
-        {
-            int MAX_ROUND = 13;
-            int[][] hash = new int[MAX_ROUND][atno.length];
-            for (int i = 0; i < atno.length; ++i)
-                hash[0][i] = 1;
-
-            int round = 1;
-            for (; round < MAX_ROUND; ++round) {
-                int p = round - 1;
-                for (int i = 0; i < atno.length; ++i) {
-                    MolAtom a = m0.getAtom(i);
-                    int ha = hash[p][i];
-                    for (int j = 0; j < a.getBondCount(); ++j) {
-                        MolAtom xa = a.getBond(j).getOtherAtom(a);
-                        int k = m0.indexOf(xa);
-                        ha += (1 << xa.getBondCount()) + hash[p][k];
-                    }
-                    if (ha < 0) {
-                        if (DEBUG) {
-                            logger.log(Level.SEVERE,
-                                       "OVERFLOW AT ITERATION "+round+"!");
-                        }
-                        ha = hash[round-1][i];
-                    }
-                    hash[round][i] = ha;
-                }
-                normalizeRanks(hash[round]);
-            }
-            rank = hash[round-1];
-        }
-        
-        
-        for (int i = 0; i < atno.length; ++i) {
-           rank[i] = (rank[i]*2048); // update rank to resolve symmetry
-           rank[i] += fallbackLookup[i]; //tie breaking based on lychi-3 fallback order            
-        }
-        
-       // System.out.println(Arrays.toString(rank));
-        
-        
-
-        for (AtomIterator ai = new AtomIterator (m0, rank); 
-             ai.hasNext(); ai.next()) {
-            int index = ai.nextIndex();
-            sb.append(MolAtom.symbolOf(atno[index]));
-        }
-        String level1 = sb.toString();
-
-        // level2: topology+atom label+bond order
-        sb = new StringBuilder ();
-        for (AtomIterator ai =new AtomIterator (m1, rank); ai.hasNext(); ) {
-            MolAtom a = ai.next();
-            
-            sb.append(a.getSymbol()+a.getImplicitHcount());
-            
-        }
-        // level1: skeleton with atom label
-        String level2 = sb.toString();
-
-        // level2: full canonical smiles with stereo/isotope/charge...
-        String level3 = molstr;
-        if (DEBUG) {
-            logger.info("hash layers:\n"+
-                        "0: "+level0 + "\n"+
-                        "1: "+level1 + "\n"+
-                        "2: "+level2 + "\n"+
-                        "3: "+level3 + "\n");
-        }
-        return hashChain45 (level0, level1, level2, level3);
+        return hashChain45 (molstr1, molstr2, molstr3, molstr);
     }
 
     static String[] hashChain45 (String... strs) {
