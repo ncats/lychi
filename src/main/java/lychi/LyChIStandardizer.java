@@ -15,6 +15,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1186,38 +1187,66 @@ public class LyChIStandardizer {
 	                       if(!"true".equals(igprop)){
 	                               m.setProperty("IGNORE_COMPLEX", "true");
 	                               
-	                               Set<int[]> rings = new HashSet<int[]>();
+	                               Set<int[]> rings = new LinkedHashSet<int[]>();
 	                               
-	                               int[][] sssr=m.getSSSR();
+	                               int maxRing=0;
+	                               
 	                               for(MolAtom ma:nonChiralStereo.keySet()){
-	                                       //need to find all atoms in the ring
-	                                       int im=m.indexOf(ma);
-	                                       for(int[] ir:sssr){                                             
-	                                               for(int i=0;i<ir.length;i++){
-	                                                       if(ir[i]==im){
-	                                                               rings.add(ir);
-	                                                       }
-	                                               }
-	                                               
-	                                       }
+	                            	   maxRing=Math.max(maxRing, ma.sringsize());
 	                               }
 	                               
+	                               int[][] sssr=m.getNonAromrings(maxRing);
+	                               for(MolAtom ma:nonChiralStereo.keySet()){
+	                            	   	   int mm =ma.sringsize();
+	                                       //need to find all atoms in the ring
+	                                       int im=m.indexOf(ma);
+	                                       for(int[] ir:sssr){
+	                                    	   	if(ir.length==mm){
+	                                    	   		for(int i=0;i<ir.length;i++){
+	                                    	   			if(ir[i]==im){
+	                                    	   				rings.add(ir);
+		                                                }
+		                                            }
+	                                    	   	}
+	                                       }
+	                               }
 	                               for(int[] rr:rings){
 	                                       Set<MolAtom> ratoms=Arrays.stream(rr)
-	                                                                                          .mapToObj(i->m.getAtom(i))
-	                                                                                          .collect(Collectors.toSet());
+                                                                  	 .mapToObj(i->m.getAtom(i))
+                                                                  	 .collect(Collectors.toCollection(()->new LinkedHashSet<MolAtom>()));
 	                                       
 	                                       MolBond[] bonds=ratoms.stream()
 	                                                 .filter(a->!chirality.containsKey(a))
-	                                             .flatMap(a->IntStream.range(0, a.getEdgeCount()).mapToObj(i->a.getEdge(i)))
-	                                             .filter(e->!ratoms.contains(e.getNode1()) || !ratoms.contains(e.getNode2()))
-	                                             .map(b->(MolBond)b)
-	                                             .filter(b->b.getType()==1)
-	                                             .peek(b->{
-	                                                 if(ratoms.contains(b.getAtom1()))b.swap();  
-	                                             })
-	                                             .toArray(i->new MolBond[i]);
-	                                                                               
+		                                             .flatMap(a->IntStream.range(0, a.getEdgeCount()).mapToObj(i->a.getEdge(i)))
+		                                             .filter(e->!ratoms.contains(e.getNode1()) || !ratoms.contains(e.getNode2()))
+		                                             .map(b->(MolBond)b)
+		                                             .filter(b->b.getType()==1)
+		                                             .peek(b->{
+		                                                 if(ratoms.contains(b.getAtom2()))b.swap();  
+		                                             })
+		                                             .toArray(i->new MolBond[i]);
+	                                       
+	                                       
+	                                       MolBond[] bondsInRing=ratoms.stream()
+	                                                 .filter(a->!chirality.containsKey(a))
+		                                             .flatMap(a->IntStream.range(0, a.getEdgeCount()).mapToObj(i->a.getEdge(i)))
+		                                             .filter(e->{
+		                                            	boolean inRing=ratoms.contains(e.getNode1()) && ratoms.contains(e.getNode2());
+		                                            	return inRing;
+		                                             })
+		                                             .map(b->(MolBond)b)
+		                                             .filter(b->b.getType()==1)
+		                                             .toArray(i->new MolBond[i]);
+	                                       
+	                                       
+	                                       int[] oldPar = new int[bondsInRing.length];
+	                                       
+	                                       for(int i=0;i<bondsInRing.length;i++){
+                                             MolBond b=bondsInRing[i];
+                                             int parity = b.getFlags() & MolBond.STEREO1_MASK;
+                                             oldPar[i]=parity;
+                                             bondsInRing[i].setFlags(0, MolBond.STEREO1_MASK);
+	                                       }         
 	                                       BitSet bs = new BitSet(bonds.length*2);
 	                                       for(int i=0;i<bonds.length;i++){
 	                                                 MolBond b=bonds[i];
@@ -1238,7 +1267,7 @@ public class LyChIStandardizer {
 	                                       for(int i=0;i<Math.pow(2, bonds.length);i++){
 	                                               BitSet onOff = new BitSet(bonds.length*2);
 	                                               for(int j=0;j<bonds.length;j++){
-	                                                       if((i>>j&1)==1){
+	                                                       if(((i>>j)&1)==1){
 	                                                               onOff.set(j*2);
 	                                                               bonds[j].setFlags(MolBond.UP, MolBond.STEREO1_MASK);
 	                                                       }else{
@@ -1249,8 +1278,11 @@ public class LyChIStandardizer {
 	                                               Molecule mclone=m.cloneMolecule();
 	                                               //(new LyChIStandardizer()).standardize(mclone);
 	                                               String hash1=LyChIStandardizer.hashKey(mclone);
+	                                               
 	                                               allPossible.add(hash1);
 	                                               onOff.or(bs);
+	                                               
+	                                               //System.out.println(mclone.toFormat("mol"));
 	                                               
 	                                               if(onOff.cardinality() == bs.cardinality()){
 	                                                       currentPossible.add(hash1);
@@ -1273,7 +1305,10 @@ public class LyChIStandardizer {
 	                                                               bonds[j].setFlags(0, MolBond.STEREO1_MASK);
 	                                                       }
 	                                               }
-	                                       }                                       
+	                                       }
+	                                       for(int i=0;i<bondsInRing.length;i++){
+	                                             bondsInRing[i].setFlags( oldPar[i], MolBond.STEREO1_MASK);
+		                                   }
 	                               }
 	                               
 	                               
