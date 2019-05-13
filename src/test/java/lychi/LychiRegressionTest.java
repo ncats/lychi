@@ -175,9 +175,9 @@ public class LychiRegressionTest {
     
     @Test
     public void correctLychiAfter10Times() throws Exception{
-	        for (int i=0;i<10;i++){
-	            correctLychiFirstTime();
-	        }
+        for (int i=0;i<10;i++){
+            correctLychiFirstTime();
+        }
     }
     
     @Test
@@ -300,16 +300,23 @@ public class LychiRegressionTest {
 								                "  8 10  1  0  0  0  0\n" + 
 								                "M  END")
 								    .layer(4)
+								    .name("stereo locked into configuration across ring with double bond should be real")
+								    
+								    //It's set to fail for now
 								    .markToFail()
-								    .name("stereo locked into configuration across ring with double bond should be real"));
+								    
+								    
+        		);
         
         
         //C[C@H]1CC[C@]2(CC1)CC[C@H](C)CC2
-        tests.add(LychiTestInstance.notEquivalent("C[C@H]1CC[C@]2(CC1)CC[C@H](C)CC2",
-                "CC1CCC2(CC1)CCC(C)CC2")
+        tests.add(LychiTestInstance.notEquivalent("C[C@H]1CC[C@]2(CC1)CC[C@H](O)CC2",
+                "CC1CCC2(CC1)CCC(O)CC2")
 								    .layer(4)
-								    .markToFail()
-								    .name("allene-like ring stereo should be honored"));
+								    .name("allene-like ring stereo should be honored")
+								    //It's set to fail for now
+								    .markToFail()				    
+        		);
         
         
         //C1[C@H]2C[C@@H]3C[C@H]1CC(C2)C3
