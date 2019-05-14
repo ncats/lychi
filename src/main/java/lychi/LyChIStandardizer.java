@@ -1195,7 +1195,9 @@ public class LyChIStandardizer {
 	                            	   maxRing=Math.max(maxRing, ma.sringsize());
 	                               }
 	                               
-	                               int[][] sssr=m.getNonAromrings(maxRing);
+	                               
+	                               
+	                               int[][] sssr=m.getSSSR();
 	                               for(MolAtom ma:nonChiralStereo.keySet()){
 	                            	   	   int mm =ma.sringsize();
 	                                       //need to find all atoms in the ring
