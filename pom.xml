@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project
-  xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>gov.nih.ncats</groupId>
   <artifactId>lychi</artifactId>
   <packaging>jar</packaging>
-  <version>0.6.0</version>
+  <version>0.7.1</version>
   <name>Lychi</name>
 
   <repositories>
@@ -36,22 +36,22 @@
     <wikiSvnExec>true</wikiSvnExec>
   </properties>
   
-<dependencies>
+  <dependencies>
     <dependency>
-        <groupId>chemaxon</groupId>
-        <artifactId>jchem</artifactId>
-        <version>3.0.0</version>
+      <groupId>chemaxon</groupId>
+      <artifactId>jchem</artifactId>
+      <version>3.0.0</version>
     </dependency>
 
- <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>4.12</version>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
     </dependency>
-</dependencies>
+  </dependencies>
 
   <build>
-  
+
   	<finalName>${project.artifactId}-${project.version}</finalName>
     <outputDirectory>${deploy.dir}</outputDirectory>
     <plugins>
@@ -65,37 +65,37 @@
           <compilerArgument>-proc:none</compilerArgument>
         </configuration>
       </plugin>
-<plugin>
-    <artifactId>maven-assembly-plugin</artifactId>
-    <executions>
-      <execution>
-        <phase>package</phase>
-        <goals>
-          <goal>single</goal>
-        </goals>
-      </execution>
-    </executions>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
 
-   <configuration>
-               <archive>
-                  <manifest>
-                     <mainClass>lychi.LyChIStandardizer</mainClass>
-                  </manifest>
-               </archive>
-               <descriptorRefs>
-                  <descriptorRef>jar-with-dependencies</descriptorRef>
-               </descriptorRefs>
-            </configuration>
-  </plugin>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>lychi.LyChIStandardizer</mainClass>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+      </plugin>
     </plugins>
     <resources>
-        <resource>
-            <directory>src/main/java</directory>
-            <includes>
-                <include>**/*.smi</include>
-  	        <include>**/*.smirks</include>
-            </includes>
-        </resource>
+      <resource>
+        <directory>src/main/java</directory>
+        <includes>
+          <include>**/*.smi</include>
+  	      <include>**/*.smirks</include>
+        </includes>
+      </resource>
     </resources>
   </build>
 </project>
