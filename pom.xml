@@ -7,7 +7,7 @@
   <groupId>gov.nih.ncats</groupId>
   <artifactId>lychi</artifactId>
   <packaging>jar</packaging>
-  <version>0.7.0</version>
+  <version>0.7.1</version>
   <name>Lychi</name>
 
   <repositories>
@@ -51,7 +51,7 @@
   </dependencies>
 
   <build>
-    
+
   	<finalName>${project.artifactId}-${project.version}</finalName>
     <outputDirectory>${deploy.dir}</outputDirectory>
     <plugins>
