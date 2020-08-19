@@ -7,8 +7,8 @@
   <groupId>gov.nih.ncats</groupId>
   <artifactId>lychi</artifactId>
   <packaging>jar</packaging>
-  <version>0.7.0</version>
-  <name>Lychi</name>
+  <version>0.7.1</version>
+  <name>LyChI</name>
 
   <repositories>
     <repository>
@@ -47,6 +47,7 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.12</version>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 
@@ -94,6 +95,13 @@
         <includes>
           <include>**/*.smi</include>
   	      <include>**/*.smirks</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>lib</directory>
+        <includes>
+          <include>**/*.md</include>
+          <include>**/*.html</include>
         </includes>
       </resource>
     </resources>
