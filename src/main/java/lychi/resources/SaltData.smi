@@ -1,5 +1,5 @@
 #SALT_STRUCTURE	SALT_NAME
-CC([O-])=O     ACETATE
+CC([O-])=O	ACETATE
 CC(=O)NCC([O-])=O	ACETURATE
 CC(=O)Oc1ccccc1C([O-])=O	ACETYLSALICYLATE
 [O-]C(=O)CCCCC([O-])=O	ADIPATE
@@ -565,7 +565,6 @@ COc1c(cc2ccccc2c1Cc1c(OC)c(cc2ccccc12)C(O)=O)C(O)=O       metembonate
 C(C)(C)(C)CC(=O)O        ebutate
 OC(=O)c1cccs1    tenoate
 CN1C2N=CN(CCS(O)(=O)=O)C2C(=O)N(C)C1=O   tofesylate
-CCOCCOCCOCC(O)=O  troxundate
-CCCCCCCCCCC(O)=O undecanoate
-C=CCCCCCCCCC(O)=O        undecylenate
-
+CCOCCOCCOCC(O)=O	troxundate
+CCCCCCCCCCC(O)=O	undecanoate
+C=CCCCCCCCCC(O)=O	undecylenate

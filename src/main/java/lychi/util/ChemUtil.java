@@ -11,6 +11,9 @@ import chemaxon.struc.MolAtom;
 import chemaxon.struc.Molecule;
 import chemaxon.util.MolHandler;
 import chemaxon.formats.MolImporter;
+import gov.nih.ncats.molwitch.Atom;
+import gov.nih.ncats.molwitch.Bond;
+import gov.nih.ncats.molwitch.Chemical;
 
 
 public class ChemUtil {
@@ -68,7 +71,23 @@ public class ChemUtil {
 	return index;
     }
 
-    public static int[] topologyInvariant (Molecule mol) {
+    public static Atom[] getAtomArray(Chemical m) {
+    	ArrayList<Atom> al = new ArrayList<Atom>();
+    	for (int i=0; i<m.getAtomCount(); i++) {
+    		al.add(m.getAtom(i));
+		}
+    	return al.toArray(new Atom[0]);
+	}
+
+	public static Bond[] getBondArray(Chemical m) {
+		ArrayList<Bond> bl = new ArrayList<Bond>();
+		for (int i=0; i<m.getBondCount(); i++) {
+			bl.add(m.getBond(i));
+		}
+		return bl.toArray(new Bond[0]);
+	}
+
+	public static int[] topologyInvariant (Molecule mol) {
 	Molecule m = mol.cloneMolecule();
 	m.hydrogenize(false);
 	m.expandSgroups();
@@ -612,7 +631,7 @@ public class ChemUtil {
 
 		// generate a version with the original atom mapping
 		String s = m.toFormat("smiles:q"+(stereo?"":"0"));
-		MolImporter.importMol(s, out);
+		out = MolImporter.importMol(s);
 		if (DEBUG) {
 		    logger.info(smiles + " <==> " + out.toFormat("smiles:q"));
 		}

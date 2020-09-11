@@ -1,32 +1,26 @@
 package lychi.tautomers;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Enumeration;
-import java.util.Collections;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.BitSet;
-import java.util.Observer;
-import java.util.Observable;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
-import chemaxon.struc.StereoConstants;
 import chemaxon.struc.Molecule;
-import chemaxon.struc.MolAtom;
-import chemaxon.struc.MolBond;
+//import chemaxon.struc.StereoConstants;
+//import chemaxon.struc.Molecule;
+import gov.nih.ncats.molwitch.*;
+//import chemaxon.struc.MolAtom;
+//import chemaxon.struc.MolBond;
 import chemaxon.formats.MolImporter;
-import chemaxon.util.MolHandler;
+//import chemaxon.util.MolHandler;
 
+import gov.nih.ncats.molwitch.io.ChemicalReader;
+import gov.nih.ncats.molwitch.io.ChemicalReaderFactory;
 import lychi.TautomerGenerator;
+import lychi.util.Base32;
 import lychi.util.GrayCode;
 
 /**
@@ -71,19 +65,17 @@ public class NCGCTautomerGenerator implements TautomerGenerator, Observer {
 
     static class MolPath implements Comparable<MolPath> {
         int[] path;
-        Set<MolAtom> atoms = new HashSet<MolAtom>();
+        Set<Atom> atoms = new HashSet<Atom>();
         BitSet urank = new BitSet ();
-        Molecule mol;
-        MolAtom start, end;
+        Chemical mol;
+        Atom start, end;
         
-        MolPath (MolBond[] path, int[] rank) {
+        MolPath (Chemical mol, Bond[] path, int[] rank) {
+            this.mol = mol;
             this.path = new int[path.length];
 
             for (int i = 0; i < path.length; ++i) {
-                MolBond b = path[i];
-                if (mol == null) {
-                    mol = (Molecule)b.getParent();
-                }
+                Bond b = path[i];
 
                 if (start == null) {
                     start = b.getAtom1();
@@ -117,7 +109,7 @@ public class NCGCTautomerGenerator implements TautomerGenerator, Observer {
                 this.path[i] = mol.indexOf(b);
             }
 
-            for (MolAtom a : atoms) {
+            for (Atom a : atoms) {
                 int i = mol.indexOf(a);
                 if (i < 0) {
                     throw new IllegalArgumentException
@@ -143,26 +135,26 @@ public class NCGCTautomerGenerator implements TautomerGenerator, Observer {
                 }
 
                 // swap the two ends
-                MolAtom a = start;
+                Atom a = start;
                 start = end;
                 end = a;
             }
         }
 
-        public void flip (Molecule m) {
+        public void flip (Chemical m) {
             // flip the parity for the bond designated by this path against
             // the given molecule. this implies that the input molecule must
             // be a copy 
             for (int i = 0; i < path.length; ++i) {
-                MolBond ref = mol.getBond(path[i]);
-                m.getBond(path[i]).setType(3 - ref.getType());
+                Bond ref = mol.getBond(path[i]);
+                m.getBond(path[i]).setBondType(ref.getBondType().switchParity());
             }
         }
 
         public int length () { return path.length; }
         public int[] getPath () { return path; }
         public boolean intersects (MolPath p) {
-            for (MolAtom a : p.atoms)
+            for (Atom a : p.atoms)
                 if (atoms.contains(a))
                     return true;
             return false;
@@ -190,9 +182,9 @@ public class NCGCTautomerGenerator implements TautomerGenerator, Observer {
                 ("end: ["+(mol.indexOf(start)+1)+","
                  +(mol.indexOf(end)+1)+"] parity:");
             for (int i = 0; i < path.length; ++i) {
-                MolBond b = mol.getBond(path[i]);
+                Bond b = mol.getBond(path[i]);
                 sb.append(" ["+(mol.indexOf(b.getAtom1())+1)
-                          +","+b.getType()
+                          +","+b.getBondType()
                           +","+(mol.indexOf(b.getAtom2())+1)
                           +"]");
             }
@@ -204,12 +196,12 @@ public class NCGCTautomerGenerator implements TautomerGenerator, Observer {
 
     private int maxcount;
     private int maxdepth = DEFAULT_MAXDEPTH;
-    private List<Molecule> tautomers = new ArrayList<Molecule>();
-    private Molecule canonicalTautomer;
+    private List<Chemical> tautomers = new ArrayList<Chemical>();
+    private Chemical canonicalTautomer;
 
     private List<MolPath> paths = new ArrayList<MolPath>();
     private int[] rank;
-    private Molecule mol;
+    private Chemical mol;
 
     public NCGCTautomerGenerator () {
         this (DEFAULT_MAXCOUNT);
@@ -225,7 +217,7 @@ public class NCGCTautomerGenerator implements TautomerGenerator, Observer {
     public int getMaxTautomers () { return maxcount; }
     public void setMaxTautomers (int maxcount) { this.maxcount = maxcount; }
 
-    public int generate (Molecule m) {
+    public int generate (Chemical m) {
         if (!instrument (m)) {
             return -1;
         }
@@ -239,15 +231,34 @@ public class NCGCTautomerGenerator implements TautomerGenerator, Observer {
         return tautomers.size();
     }
 
-    public Enumeration<Molecule> tautomers () {
+    @Override
+    public int generate(Molecule mol) {
+        Chemical m = null;
+        try {
+            m = Chemical.parse(mol.toFormat("smiles"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return generate(m);
+    }
+
+    public Enumeration<Chemical> tautomers () {
         return Collections.enumeration(tautomers);
     }
+
     public int getTautomerCount () { return tautomers.size(); }
 
-    public Molecule getCanonicalTautomer () {
+    public Chemical getCanonicalTautomer () {
         throw new UnsupportedOperationException 
             ("Canonical tautomer is currently not support by "
              +"this implementation!");
+    }
+
+    @Override
+    public Molecule getCanonicalTautomerRefactor() {
+        throw new UnsupportedOperationException
+                ("Canonical tautomer refactor is currently not support by "
+                        +"this implementation!");
     }
 
     public void update (Observable o, Object arg) {
@@ -270,7 +281,7 @@ public class NCGCTautomerGenerator implements TautomerGenerator, Observer {
 
         if (tautomers.size() < maxcount) {
             // now for each path we toggle its parity
-            Molecule m = mol.cloneMolecule();
+            Chemical m = mol.copy();
 
             if (debug) {
                 StringBuilder sb = new StringBuilder ();
@@ -279,7 +290,11 @@ public class NCGCTautomerGenerator implements TautomerGenerator, Observer {
                     sb.append(p.toString()+"\n");
                 }
                 m.setProperty("PARITY", sb.toString());
-                System.out.print(m.toFormat("sdf"));
+                try {
+                    System.out.print(m.toSd());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
             else {
                 for (MolPath p : select) {
@@ -293,26 +308,28 @@ public class NCGCTautomerGenerator implements TautomerGenerator, Observer {
         }
     }
 
-    protected boolean instrument (Molecule m) {
-        mol = m.cloneMolecule();
-	mol.expandSgroups();
-	mol.hydrogenize(false);
-	mol.implicitizeHydrogens(MolAtom.ALL_H);
-        mol.aromatize(false);
+    protected boolean instrument (Chemical m) {
+        mol = m.copy();
+	mol.expandSGroups();
+	//mol.hydrogenize(false);
+	mol.makeHydrogensImplicit();//mol.implicitizeHydrogens(MolAtom.ALL_H);
+        mol.kekulize();//mol.aromatize(false);
 
         rank = getTopologyRank (mol);
-        MolAtom[] atoms = mol.getAtomArray();
+        Atom[] atoms = new Atom[mol.getAtomCount()];
+        for (int i=0; i<atoms.length; i++)
+            atoms[i] = mol.getAtom(i);
 
         BitSet don = new BitSet (atoms.length);
         BitSet acc = new BitSet (atoms.length);
         for (int i = 0; i < atoms.length; ++i) {
             int q = atoms[i].getCharge();
-            int h = atoms[i].getImplicitHcount();
+            int h = atoms[i].getImplicitHCount();
 
             int sb = h, db = 0, tb = 0; // single-, double-, triple-bond count
-            for (int j = 0; j < atoms[i].getBondCount(); ++j) {
-                MolBond b = atoms[i].getBond(j);
-                switch (b.getType()) {
+            for (Bond b: atoms[i].getBonds()) {
+            //for (int j = 0; j < atoms[i].getBondCount(); ++j) {
+                switch (b.getBondType().getOrder()) {
                 case 1: ++sb; break;
                 case 2: ++db; break;
                 case 3: ++tb; break;
@@ -321,7 +338,7 @@ public class NCGCTautomerGenerator implements TautomerGenerator, Observer {
                 }
             }
 
-            switch (atoms[i].getAtno()) {
+            switch (atoms[i].getAtomicNumber()) {
             case 6: // C
                 // don't consider keto-enol at the moment
                 break;
@@ -344,7 +361,7 @@ public class NCGCTautomerGenerator implements TautomerGenerator, Observer {
                 }
                 else if (q == -1) {
                     if (sb == 2 && db == 0 && tb == 0) {
-                        atoms[i].setImplicitHcount(1);
+                        atoms[i].setImplicitHCount(1);
                         atoms[i].setCharge(0);
                         don.set(i);
                     }
@@ -390,28 +407,27 @@ public class NCGCTautomerGenerator implements TautomerGenerator, Observer {
     }
 
     protected void genParityPath (int start, int end) {
-        LinkedList<MolBond> path = new LinkedList<MolBond>();
-        Set<MolAtom> visited = new HashSet<MolAtom>();
+        LinkedList<Bond> path = new LinkedList<Bond>();
+        Set<Atom> visited = new HashSet<Atom>();
         genParityPath (path, visited, 1, 
                        mol.getAtom(start), mol.getAtom(end));
     }
 
     protected void genParityPath 
-        (LinkedList<MolBond> path, Set<MolAtom> visited, 
-         int parity, MolAtom a, MolAtom end) {
+        (LinkedList<Bond> path, Set<Atom> visited,
+         int parity, Atom a, Atom end) {
 
         if (a == end) {
-            MolPath newpath = new MolPath (path.toArray(new MolBond[0]), rank);
+            MolPath newpath = new MolPath (mol, path.toArray(new Bond[0]), rank);
             paths.add(newpath);
         }
         else if (path.size() <= maxdepth) {
             visited.add(a);
-            for (int i = 0; i < a.getBondCount(); ++i) {
-                MolBond b = a.getBond(i);
-                MolAtom xa = b.getOtherAtom(a);
+            for (Bond b: a.getBonds()) {
+                Atom xa = b.getOtherAtom(a);
                 if (visited.contains(xa) || xa.getCharge() != 0) {
                 }
-                else if (parity + 1 == b.getType()) {
+                else if (parity + 1 == b.getBondType().getOrder()) {
                     path.push(b);
                     genParityPath (path, visited, 1-parity, xa, end);
                     path.pop();
@@ -421,37 +437,44 @@ public class NCGCTautomerGenerator implements TautomerGenerator, Observer {
         }
     }
 
-    protected static int[] getTopologyRank (Molecule mol) {
-        Molecule m = mol.cloneMolecule();
+    protected static int[] getTopologyRank (Chemical mol) {
+        Chemical m = mol.copy();
 
-        for (MolAtom a : m.getAtomArray()) {
-	    a.setAtno(6);
-	    a.setRadical(0);
-	    a.setCharge(0);
-	    a.setFlags(0);
+        for (Iterator<Atom> ai = m.getAtoms().iterator(); ai.hasNext();) {
+            Atom a = ai.next();
+            a.setAtomicNumber(6);
+            a.setRadical(0);
+            a.setCharge(0);
+            a.setChirality(Chirality.Non_Chiral);
+	    //a.setAtno(6);
+	    //a.setRadical(0);
+	    //a.setCharge(0);
+	    //a.setFlags(0);
 	}
 
-	for (MolBond b : m.getBondArray()) {
-	    b.setFlags(0);
-	    b.setType(1);
+	for (Iterator<Bond> bi = m.getBonds().iterator(); bi.hasNext();) {
+	    Bond b = bi.next();
+	    b.setBondType(Bond.BondType.SINGLE);
+	    b.setStereo(Bond.Stereo.NONE);
+	    //b.setFlags(0);
+	    //b.setType(1);
 	}
 
-        int[] rank = new int[m.getAtomCount()];
-        m.getGrinv(rank);
-
+	    GraphInvariant gi = m.getGraphInvariant();
+	    int[] rank = TautomerGenerator.getGrinv(gi);
         return rank;
     }
 
     static void test () throws Exception {
         // guanine
-        MolHandler mh = new MolHandler ("Nc1nc2[nH]cnc2c(=O)[nH]1");
+        Chemical m = Chemical.createFromSmiles("Nc1nc2[nH]cnc2c(=O)[nH]1");
         TautomerGenerator tau = new NCGCTautomerGenerator ();
-        int n = tau.generate(mh.getMolecule());
+        int n = tau.generate(m);
         logger.info("guanine has "+n+" tautomers...");
-        for (Enumeration<Molecule> en = tau.tautomers();
+        for (Enumeration<Chemical> en = tau.tautomers();
              en.hasMoreElements(); ) {
-            Molecule m = en.nextElement();
-            System.out.println(m.toFormat("smiles:q"));
+            Chemical mol = en.nextElement();
+            System.out.println(mol.toSmiles());
         }
     }
 
@@ -460,18 +483,19 @@ public class NCGCTautomerGenerator implements TautomerGenerator, Observer {
 
         if (argv.length == 0) {
             logger.info("## Reading from STDIN");
-            MolImporter mi = new MolImporter (System.in);
-            for (Molecule mol = new Molecule (); mi.read(mol); ) {
-                tau.generate(mol);
+            ChemicalReader cr = ChemicalReaderFactory.newReader (System.in);
+            while (cr.canRead()) {
+                tau.generate(cr.read());
             }
         }
         else {
+            test();
+/*
             for (String a : argv) {
-                MolImporter mi = new MolImporter (a);
-                for (Molecule mol = new Molecule (); mi.read(mol); ) {
-                    tau.generate(mol);
-                }
+                Chemical mol = Chemical.parse(a);
+                tau.generate(mol);
             }
+*/
         }
     }
 }

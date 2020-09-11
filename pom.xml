@@ -39,8 +39,10 @@
   <dependencies>
     <dependency>
       <groupId>chemaxon</groupId>
-      <artifactId>jchem</artifactId>
+      <artifactId>jchem-main</artifactId>
       <version>3.0.0</version>
+      <scope>system</scope>
+      <systemPath>${basedir}/lib/jchem3.jar</systemPath>
     </dependency>
 
     <dependency>
@@ -49,6 +51,16 @@
       <version>4.12</version>
       <scope>provided</scope>
     </dependency>
+      <dependency>
+          <groupId>gov.nih.ncats</groupId>
+          <artifactId>molwitch</artifactId>
+          <version>0.5.9</version>
+      </dependency>
+    <dependency>
+      <groupId>gov.nih.ncats</groupId>
+      <artifactId>molwitch-jchem</artifactId>
+      <version>20.3.0</version>
+      </dependency>
   </dependencies>
 
   <build>

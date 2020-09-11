@@ -30,6 +30,8 @@ import chemaxon.struc.MolBond;
 import chemaxon.struc.Molecule;
 import chemaxon.struc.RgMolecule;
 import chemaxon.util.MolHandler;
+import gov.nih.ncats.molwitch.Chemical;
+import lychi.tautomers.NCGCTautomerGenerator;
 import lychi.tautomers.SayleDelanyTautomerGenerator;
 import lychi.util.Base32;
 import lychi.util.ChemUtil;
@@ -449,7 +451,7 @@ public class LyChIStandardizer {
         Molecule clone = mol.cloneMolecule();
         try {
             taugen.generate(mol);
-            Molecule cantau = taugen.getCanonicalTautomer();
+            Molecule cantau = taugen.getCanonicalTautomerRefactor();
             if (cantau != mol) {
                 cantau.clonecopy(mol);
             }
@@ -1480,7 +1482,7 @@ public class LyChIStandardizer {
                     Molecule copy = f.cloneMolecule();
                     try {
                         taugen.generate(f);
-                        f = taugen.getCanonicalTautomer();
+                        f = taugen.getCanonicalTautomerRefactor();
                     }
                     catch (Exception ex) {
                         logger.log(Level.WARNING, "Can't generate tautomer "
@@ -1576,7 +1578,7 @@ public class LyChIStandardizer {
                     Molecule copy = f.cloneMolecule();
                     try {
                         taugen.generate(f);
-                        f = taugen.getCanonicalTautomer();
+                        f = taugen.getCanonicalTautomerRefactor();
                     }
                     catch (Exception ex) {
                         logger.log(Level.WARNING, "Can't generate tautomer "
@@ -1589,11 +1591,13 @@ public class LyChIStandardizer {
                         int cnt = 0;
                         System.err.println
                             (taugen.getTautomerCount() + " tautomers");
-                        for (Enumeration<Molecule> tau = taugen.tautomers();
+                        for (Enumeration<Chemical> tau = taugen.tautomers();
                              tau.hasMoreElements(); ++cnt) {
-                            Molecule t = tau.nextElement();
-                            int score = ChemUtil.calcMolScore(t);
-                            System.err.println(ChemUtil.canonicalSMILES (t) + " "+cnt
+                            Chemical t = tau.nextElement();
+                            Molecule m = MolImporter.importMol(t.toSmiles());
+
+                            int score = ChemUtil.calcMolScore(m);
+                            System.err.println(ChemUtil.canonicalSMILES (m) + " "+cnt
                                                + " " + score);
                         }
 

@@ -53,7 +53,7 @@ public class SaltIdentifier {
 
 	    tg.generate(mol);
 
-	    mol = tg.getCanonicalTautomer();
+	    mol = tg.getCanonicalTautomerRefactor();
 	    for (SMIRKS tx : neutralize) {
 		tx.transform(mol);
 	    }

@@ -1,5 +1,6 @@
 package lychi.tautomers;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.ArrayList;
@@ -23,6 +24,8 @@ import chemaxon.struc.MolBond;
 import chemaxon.formats.MolImporter;
 import chemaxon.util.MolHandler;
 
+import gov.nih.ncats.molwitch.Bond;
+import gov.nih.ncats.molwitch.Chemical;
 import lychi.TautomerGenerator;
 import lychi.util.ChemUtil;
 
@@ -97,8 +100,8 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     private int[] avisit;
     private int[] bvisit;
 
-    private List<Molecule> tautomers = new ArrayList<Molecule>();
-    private Molecule canonicalTautomer = null;
+    private List<Chemical> tautomers = new ArrayList<Chemical>();
+    private Chemical canonicalTautomer = null;
 
     /**
      * Note that if the maximum number of tautomers is reached
@@ -135,7 +138,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     public int getMaxTautomers () { return maxsize; }
     public void setMaxTautomers (int maxsize) { this.maxsize = maxsize; }
 
-    public void setTimeout (long timeout) {
+	public void setTimeout (long timeout) {
 	this.timeoutThreshold = timeout;
     }
     public long getTimeout () { return timeoutThreshold; }
@@ -216,7 +219,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 		logger.info("Input molecule: " + smiles);
 	    }
 
-	    MolImporter.importMol(smiles, m);
+	    m = MolImporter.importMol(smiles);
 	    m.dearomatize();
 
             // restore the chirality flags
@@ -337,7 +340,18 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	canonicalTautomer = null;
     }
 
-    public int generate (Molecule molecule) {
+	@Override
+	public int generate(Chemical mol) {
+		Molecule m = null;
+		try {
+			m = MolImporter.importMol(mol.toSmiles());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return generate(m);
+	}
+
+	public int generate (Molecule molecule) {
         init (molecule);
 
 	assignAtomTypes ();
@@ -442,15 +456,23 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
         return tautomers.size();
     }
 
-    public Enumeration<Molecule> tautomers () {
-	return Collections.enumeration(tautomers);
+    public Enumeration<Chemical> tautomers () {
+    	return Collections.enumeration(tautomers);
     }
 
-    public int getTautomerCount () { return tautomers.size(); }
+	public int getTautomerCount () { return tautomers.size(); }
 
-    public String getCanonicalTautomerAsString () { 
-	return ChemUtil.canonicalSMILES(getCanonicalTautomer());
-    }
+    public Molecule getCanonicalTautomerRefactor () {
+		try {
+			//Molecule m = null;
+			String smi = getCanonicalTautomer().toSmiles();
+			Molecule m = MolImporter.importMol(smi);
+			return m;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 
     /*
      * since the tautomers are always generated in the same order
@@ -458,20 +480,30 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
      * be the first tautomer found.  however, here we apply a set of
      * scoring heuristics to find the best "looking" one instead.
      */
-    public synchronized Molecule getCanonicalTautomer () { 
+    public synchronized Chemical getCanonicalTautomer () {
 	if (canonicalTautomer == null) {
 	    if (tautomers.isEmpty()) {
-		canonicalTautomer = mol;
-	    }
+			try {
+				canonicalTautomer = Chemical.parse(mol.toFormat("smiles"));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	    else if (/*truncated ||*/ tautomers.size() == 1) {
-		// no point evaluating the score if we only have on tautomer
-		canonicalTautomer = tautomers.iterator().next();
+			// no point evaluating the score if we only have on tautomer
+			canonicalTautomer = tautomers.iterator().next();
 	    }
 	    else {
 		int bestScore = -1;
-		List<Molecule> candidates = new ArrayList<Molecule>();
-		for (Molecule tau : tautomers) {
-		    int score = scoreTautomer (tau);
+		List<Chemical> candidates = new ArrayList<Chemical>();
+		for (Chemical tau : tautomers) {
+			Molecule m = null;
+			try {
+				m = MolImporter.importMol(tau.toSmiles());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			int score = scoreTautomer (m);
 		    if (score > bestScore || canonicalTautomer == null) {
 			canonicalTautomer = tau;
 			candidates.add(tau);
@@ -509,7 +541,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	return canonicalTautomer;	
     }
 
-    protected static int[] graphInvariantOrder (Molecule m) {
+	protected static int[] graphInvariantOrder (Molecule m) {
 	int[] gi = new int[m.getAtomCount()];
 	m.getGrinv(gi, Molecule.GRINV_STEREO|Molecule.GRINV_NOHYDROGEN);
 
@@ -1270,7 +1302,11 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 		logger.info("Tautomer generated: "+tau.toFormat("smiles:q"));
 	    }
 
-	    tautomers.add(tau);
+		try {
+			tautomers.add(Chemical.parse(tau.toFormat("smiles:q")));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	truncated = tautomers.size() >= maxsize;
@@ -1308,11 +1344,12 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 		if (order != type) {
 		    // make sure previously generated tautomers turn off
 		    //  the stereo flag for this bond
-		    for (Molecule tau : tautomers) {
-			tau.getBond(i).setFlags(0, MolBond.STEREO_MASK);
-			tau.getBond(i).setFlags(0, MolBond.TOPOLOGY_MASK);
-			tau.getBond(i).setFlags
-			    (0, MolBond.REACTING_CENTER_MASK);
+		    for (Chemical tau : tautomers) {
+		    	tau.getBond(i).setStereo(Bond.Stereo.NONE);
+			//tau.getBond(i).setFlags(0, MolBond.STEREO_MASK);
+			//tau.getBond(i).setFlags(0, MolBond.TOPOLOGY_MASK);
+			//tau.getBond(i).setFlags
+			//    (0, MolBond.REACTING_CENTER_MASK);
 		    }
 		    bflags[i] &= ~MolBond.STEREO_MASK;
 		}
@@ -1421,23 +1458,28 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	  System.out.print(mol.toFormat("sdf:-a"));
 	*/
 	int cnt = 1;
-	for (Enumeration<Molecule> tau = taugen.tautomers();
-	     tau.hasMoreElements(); ++cnt) {
-	    Molecule t = tau.nextElement();
-	    int score = scoreTautomer (t);
+	for (Enumeration<Chemical> tau = taugen.tautomers();
+		 tau.hasMoreElements(); ++cnt) {
+	    Chemical t = tau.nextElement();
+	    Molecule m = null;
+	    m = MolImporter.importMol(t.toSmiles());
+	    int score = scoreTautomer (m);
 	    /*
 	      t.setProperty("TauScore", String.valueOf(score));
 	      System.out.print(t.toFormat("sdf:-a"));
 	    */
-	    System.out.println(t.toFormat("smiles:u-a") + " "+cnt
+	    System.out.println(t.toSmiles()//t.toFormat("smiles:u-a")
+				+ " "+cnt
 			       + " " + score);
 	}
 
-	Molecule cantau = taugen.getCanonicalTautomer();
+	Chemical cantau = taugen.getCanonicalTautomer();
 	//cantau.setName("CanonicalTautomer");
 	//System.out.print(cantau.toFormat("sdf:-a"));
-	System.out.println(cantau.toFormat("smiles:q") 
-			   + "\tCanonical" + "\t" + scoreTautomer (cantau));
+		Molecule m = MolImporter.importMol(cantau.toSmiles());
+
+		System.out.println(cantau.toSmiles()//cantau.toFormat("smiles:q")
+			   + "\tCanonical" + "\t" + scoreTautomer (m));
 
 	/*
 	System.out.println(MolStandardizer.canonicalSMILES(cantau) 
@@ -1447,7 +1489,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 
     public static void main (String argv[]) throws Exception {
 
-	TautomerGenerator taugen = new SayleDelanyTautomerGenerator 
+	TautomerGenerator taugen = new SayleDelanyTautomerGenerator
 	    (Integer.getInteger("maxtau",1001), FLAG_ALL);
 	//taugen.unset(FLAG_NOXIDE);
 	//taugen.set(FLAG_ALL);
