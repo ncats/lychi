@@ -26,6 +26,7 @@ import chemaxon.util.MolHandler;
 
 import gov.nih.ncats.molwitch.Bond;
 import gov.nih.ncats.molwitch.Chemical;
+import gov.nih.ncats.molwitch.io.ChemFormat;
 import lychi.TautomerGenerator;
 import lychi.util.ChemUtil;
 
@@ -34,7 +35,9 @@ import lychi.util.ChemUtil;
  */
 public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     private static boolean debug = false;
+	private static ChemFormat.SmilesFormatWriterSpecification _kekulized = new ChemFormat.SmilesFormatWriterSpecification();
     static {
+		_kekulized.setKekulization(ChemFormat.KekulizationEncoding.KEKULE);
 	try {
 	    debug = Boolean.getBoolean("lychi-tautomer.debug");
 	}
@@ -344,7 +347,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	public int generate(Chemical mol) {
 		Molecule m = null;
 		try {
-			m = MolImporter.importMol(mol.toSmiles());
+			m = MolImporter.importMol(mol.toSmiles(_kekulized));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -465,7 +468,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     public Molecule getCanonicalTautomerRefactor () {
 		try {
 			//Molecule m = null;
-			String smi = getCanonicalTautomer().toSmiles();
+			String smi = getCanonicalTautomer().toSmiles(_kekulized);
 			Molecule m = MolImporter.importMol(smi);
 			return m;
 		} catch (IOException e) {
@@ -499,7 +502,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 		for (Chemical tau : tautomers) {
 			Molecule m = null;
 			try {
-				m = MolImporter.importMol(tau.toSmiles());
+				m = MolImporter.importMol(tau.toSmiles(_kekulized));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -541,7 +544,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	return canonicalTautomer;	
     }
 
-	protected static int[] graphInvariantOrder (Molecule m) {
+    protected static int[] graphInvariantOrder (Molecule m) {
 	int[] gi = new int[m.getAtomCount()];
 	m.getGrinv(gi, Molecule.GRINV_STEREO|Molecule.GRINV_NOHYDROGEN);
 
@@ -1462,13 +1465,14 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 		 tau.hasMoreElements(); ++cnt) {
 	    Chemical t = tau.nextElement();
 	    Molecule m = null;
-	    m = MolImporter.importMol(t.toSmiles());
+	    m = MolImporter.importMol(t.toSmiles(_kekulized));
 	    int score = scoreTautomer (m);
 	    /*
 	      t.setProperty("TauScore", String.valueOf(score));
 	      System.out.print(t.toFormat("sdf:-a"));
 	    */
-	    System.out.println(t.toSmiles()//t.toFormat("smiles:u-a")
+	    System.out.println(//t.toSmiles(_kekulized)
+				m.toFormat("smiles:u-a")
 				+ " "+cnt
 			       + " " + score);
 	}
@@ -1476,9 +1480,9 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	Chemical cantau = taugen.getCanonicalTautomer();
 	//cantau.setName("CanonicalTautomer");
 	//System.out.print(cantau.toFormat("sdf:-a"));
-		Molecule m = MolImporter.importMol(cantau.toSmiles());
+		Molecule m = MolImporter.importMol(cantau.toSmiles(_kekulized));
 
-		System.out.println(cantau.toSmiles()//cantau.toFormat("smiles:q")
+		System.out.println(cantau.toSmiles(_kekulized)
 			   + "\tCanonical" + "\t" + scoreTautomer (m));
 
 	/*

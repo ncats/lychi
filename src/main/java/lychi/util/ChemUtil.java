@@ -24,6 +24,7 @@ public class ChemUtil {
 	    DEBUG = Boolean.getBoolean("lychi-chemutil.debug");
 	}
 	catch (Exception ex) {
+		ex.printStackTrace();
 	}
     }
 
