@@ -51,7 +51,7 @@
       <version>4.12</version>
       <scope>provided</scope>
     </dependency>
-      <dependency>
+      <!--dependency>
           <groupId>gov.nih.ncats</groupId>
           <artifactId>molwitch</artifactId>
           <version>0.5.9</version>
@@ -60,7 +60,26 @@
       <groupId>gov.nih.ncats</groupId>
       <artifactId>molwitch-jchem</artifactId>
       <version>20.3.0</version>
-      </dependency>
+      </dependency-->
+    <dependency>
+      <groupId>gov.nih.ncats</groupId>
+      <artifactId>molwitch</artifactId>
+      <version>0.5.2</version>
+      <scope>system</scope>
+      <systemPath>${basedir}/lib/molwitch-0.5.9.1.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>gov.nih.ncats</groupId>
+      <artifactId>molwitch-jchem</artifactId>
+      <version>20.3.0</version>
+      <scope>system</scope>
+      <systemPath>${basedir}/lib/molwitch-jchem-20.3.0.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>gov.nih.ncats</groupId>
+      <artifactId>ncats-common</artifactId>
+      <version>0.3.1</version>
+    </dependency>
   </dependencies>
 
   <build>

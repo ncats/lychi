@@ -1,0 +1,7 @@
+#SMILES Name Score
+#Nc1nc2[nH]cnc2c(=O)[nH]1    yo1    #guanine, easy test case
+#Cl[C@H]1[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H]1Cl  yo2    #original lychi provides different can smi (inversion) for some reason; they are the same molecule
+#CC1=NC(C2=CC(C=CC2=NC1=O)=[N+](O)[O-])=C3C=CC=CC3Cl yo  -23 #something about the NO2 causes different can smi to come out
+#C1CC2=C(C=C1)C3=C4C(SSSSC3=N2)=NC5=C4C=CC=C5    yo  401 #irreproducibly 16th tautomer gets a different score (403) in original version; smiles comes out aromatized? C1Cc2nc3ssssc4nc5ccccc5c4c3c2C=C1
+#C[C@]12O[C@@H](C[C@]1(O)CO)N3C4=CC=CC=C4C5=C6C(=O)NC=C6C7=C8C=CC=CC8N2C7=C35    yo  365   #impossible stereoisomer of LESTAURTINIB; original lychi improperly adds chiral center to nitrogen?
+C[C@@H](O)[C@H](NC(=O)[C@@H](C)[C@H](O)[C@@H](C)NC(=O)[C@@H](NC(=O)C1=C(C)C(N)=NC(=N1)[C@H](CC(N)=O)NC[C@H](N)C(N)=O)[C@@H](O[C@@H]2O[C@@H](CO)[C@@H](O)[C@H](O)[C@@H]2O[C@H]3O[C@H](CO)[C@@H](O)[C@H](OC(N)=O)[C@@H]3O)C4=CN=CN4)C(=O)NCCC5=NC(=CS5)C6=NC(=CS6)C(=O)NCCC[S+](C)C   test protein

@@ -1,31 +1,21 @@
 package lychi.tautomers;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Enumeration;
-import java.util.Collections;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.BitSet;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
-import chemaxon.struc.StereoConstants;
+//import chemaxon.struc.StereoConstants;
 import chemaxon.struc.Molecule;
-import chemaxon.struc.MolAtom;
-import chemaxon.struc.MolBond;
+//import chemaxon.struc.MolAtom;
+//import chemaxon.struc.MolBond;
 import chemaxon.formats.MolImporter;
-import chemaxon.util.MolHandler;
+//import chemaxon.util.MolHandler;
 
+import gov.nih.ncats.molwitch.Atom;
 import gov.nih.ncats.molwitch.Bond;
 import gov.nih.ncats.molwitch.Chemical;
+import gov.nih.ncats.molwitch.Chirality;
 import gov.nih.ncats.molwitch.io.ChemFormat;
 import lychi.TautomerGenerator;
 import lychi.util.ChemUtil;
@@ -89,9 +79,9 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     /*
      * input
      */
-    private Molecule mol;
-    private MolAtom[] atoms;
-    private MolBond[] bonds;
+    private Chemical mol;
+    private Atom[] atoms;
+    private Bond[] bonds;
     private int[] bflags; // bond flags
     private int[] amaps; // atom mapping
 
@@ -146,10 +136,10 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     }
     public long getTimeout () { return timeoutThreshold; }
 
-    public void setMolecule (Molecule mol) {
+    public void setMolecule (Chemical mol) {
 	init (mol);
     }
-    public Molecule getMolecule () { return mol; }
+    public Chemical getMolecule () { return mol; }
 
     public void set (int mask) {
 	flags |= mask;
@@ -161,42 +151,27 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	return (flags & mask) == mask;
     }
 
-    protected static boolean isKekulized (Molecule m) {
-	for (MolBond b : m.getBondArray()) {
-	    if (b.getType() == MolBond.AROMATIC) {
+    protected static boolean isKekulized (Chemical m) {
+	for (Bond b : ChemUtil.getBondArray(m)) {
+	    if (b.getBondType() == Bond.BondType.AROMATIC) {
 		return false;
 	    }
 	}
 	return true;
     }
 
-    private static boolean kekulize (Molecule out, Molecule mol) {
-	Molecule m = mol.cloneMolecule();
-	m.aromatize(Molecule.AROM_BASIC);
-	m.dearomatize();
-
-	boolean kekulized = isKekulized (m);
-	if (kekulized) {
-	    if (out != null) {
-		out.clear();
-		m.clonecopy(out);
-	    }
-	}
-	return kekulized;
-    }
-
-    protected void init (Molecule m) {
+    protected void init (Chemical m) {
 	// first make a copy of the input if it's kekulized...
 	//this.mol = isKekulized (m) ? m.cloneMolecule() : m;
-	Molecule _m = m;
-	m = m.cloneMolecule();
-	m.clearProperties();
+	Chemical _m = m;
+	m = m.copy();
+	ChemUtil.clearProperties(m);
 
 	String name = m.getName();
-	m.expandSgroups();
-	m.hydrogenize(false);
+	m.expandSGroups();
+	m.makeHydrogensImplicit();//hydrogenize(false);
 	m.aromatize();
-	m.dearomatize();
+	m.kekulize();//dearomatize();
 
 	String smiles = null;
 	try {
@@ -206,41 +181,44 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	     * This allows us to start with a clean slate molecule.
 	     */
             Map<Integer, Integer> chiral = new HashMap<Integer, Integer>();
-            atoms = m.getAtomArray();
+            atoms = ChemUtil.getAtomArray(m);
             //logger.info("Tautomer: ++ "+m.toFormat("smiles:q"));
             for (int i = 0; i < atoms.length; ++i) {
-                int k = atoms[i].getAtomMap();
-                int c = m.getChirality(i);
-                if (c == MolAtom.CHIRALITY_R || c == MolAtom.CHIRALITY_S) {
+                int k = ChemUtil.getAtomMap(atoms[i]);
+                int c = atoms[i].getChirality().getParity();//m.getChirality(i);
+                if (c == Chirality.R.getParity() || c == Chirality.S.getParity()) {
                     //logger.info(k+": "+c);
                     chiral.put(k, c);
                 }
             }
 
-	    smiles = m.toFormat("mol");
+	    smiles = m.toSmiles();//m.toFormat("mol");
 	    if (debug) {
 		logger.info("Input molecule: " + smiles);
 	    }
 
-	    m = MolImporter.importMol(smiles);
-	    m.dearomatize();
+	    m = Chemical.parse(smiles);//MolImporter.importMol(smiles);
+	    m.kekulize();//.dearomatize();
 
+/* TODO !!!! Understand why this is needed
             // restore the chirality flags
-            atoms = m.getAtomArray();
+            atoms = ChemUtil.getAtomArray(m);
             for (int i = 0; i < atoms.length; ++i) {
-                Integer c = chiral.get(atoms[i].getAtomMap());
+                Integer c = chiral.get(ChemUtil.getAtomMap(atoms[i]));
                 if (c != null) {
                     //logger.info(atoms[i].getAtomMap()+": "+c);
-                    m.setChirality(i, c);
+                    atoms[i].setChirality(Chirality.valueByParity(c));//m.setChirality(i, c);
                 }
             }
             //logger.info("Tautomer: -- "+m.toFormat("smiles:q"));
+*/
 
-	    if (!isKekulized (m)) {
+		String smiles2 = m.toSmiles();//m.toFormat("mol");
+		if (!isKekulized (m)) {
 		// can't kekulized this molecule, so revert back to the 
 		//   original input
-		m.clear();
-		_m.clonecopy(m);
+		//m.clear();
+		m = _m.copy();//_m.clonecopy(m);
 	    }
 
 	    m.setName(name);
@@ -252,7 +230,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	}
 	this.mol = m;
 
-	atoms = mol.getAtomArray();
+	atoms = ChemUtil.getAtomArray(mol);
 	amaps = new int[atoms.length];
 	/*
 	 * TODO: need to verify this
@@ -262,21 +240,21 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	 * CID 383802
 	 */
 	for (int i = 0; i < atoms.length; ++i) {
-	    MolAtom a = atoms[i];
-	    amaps[i] = a.getAtomMap();
+	    Atom a = atoms[i];
+	    amaps[i] = ChemUtil.getAtomMap(a);
 	    //a.setAtomMap(0); // now reset it
 	}
 
-	bonds = mol.getBondArray();
+	bonds = ChemUtil.getBondArray(mol);
 	bflags = new int[bonds.length];
 	for (int i = 0; i < bonds.length; ++i) {
-	    MolBond bnd = bonds[i];
-	    int flags = bnd.getFlags();
-	    if (bnd.getType() == MolBond.AROMATIC) {
-		int a = flags & MolBond.TYPE_MASK;
-		int b = flags & MolBond.STEREO_MASK;
-		int c = flags & MolBond.TOPOLOGY_MASK;
-		int d = flags & MolBond.REACTING_CENTER_MASK;
+	    Bond bnd = bonds[i];
+	    int bondflags = ChemUtil.BondMask.getMask(bnd);//bnd.getFlags();
+	    if (bnd.getBondType() == Bond.BondType.AROMATIC) {
+		int a = ChemUtil.BondMask.type(bondflags);//flags & MolBond.TYPE_MASK;
+		int b = ChemUtil.BondMask.stereo(bondflags);//flags & MolBond.STEREO_MASK;
+		int c = ChemUtil.BondMask.topo(bondflags);//flags & MolBond.TOPOLOGY_MASK;
+		int d = ChemUtil.BondMask.chiral(bondflags);//flags & MolBond.REACTING_CENTER_MASK;
 		String str = ("bond " + (this.mol.indexOf(bnd.getAtom1())+1)
 			      + "-" + (this.mol.indexOf(bnd.getAtom2())+1)
 			      + " type="+a + " stereo="+b 
@@ -288,21 +266,25 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 
 	    if (debug) {
 		if (i == 0) {
-		    logger.info("## Init bond annotations for "
-				+mol.toFormat("smiles:q"));
+			try {
+				logger.info("## Init bond annotations for "
+					+mol.toSmiles());//+mol.toFormat("smiles:q"));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
-		int stereo = flags & MolBond.STEREO_MASK;
-		int topo = flags & MolBond.TOPOLOGY_MASK;
-		int chiral = flags & MolBond.REACTING_CENTER_MASK;
+		int stereo = bondflags & ChemUtil.BondMask.STEREO_MASK;
+		int topo = bondflags & ChemUtil.BondMask.TOPOLOGY_MASK;
+		int chiral = bondflags & ChemUtil.BondMask.REACTING_CENTER_MASK;
 		if (stereo != 0) {
 		    String ez = "";
-		    if ((stereo & StereoConstants.TRANS) 
-			== StereoConstants.TRANS) {
+		    if ((stereo & ChemUtil.BondMask.TRANS)
+			== ChemUtil.BondMask.TRANS) {
 			ez += "E";
 		    }
-		    if ((stereo & StereoConstants.CIS) 
-			== StereoConstants.CIS) {
+		    if ((stereo & ChemUtil.BondMask.CIS)
+			== ChemUtil.BondMask.CIS) {
 			if (ez.length() > 0) {
 			    ez += "/";
 			}
@@ -311,26 +293,26 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 
 		    logger.info("Bond "+(i+1)+":"
 				+ (mol.indexOf(bnd.getAtom1())+1)
-				+ (bnd.getType()==2?"=":"-")
+				+ (bnd.getBondType().getOrder()==2?"=":"-")
 				+ (mol.indexOf(bnd.getAtom2())+1)
 				+ " has stereo flags: "+ez + " ("+stereo+")");
 		}
 		if (topo != 0) {
 		    logger.info("Bond "+(i+1)+":"
 				+ (mol.indexOf(bnd.getAtom1())+1)
-				+ (bnd.getType()==2?"=":"-")
+				+ (bnd.getBondType().getOrder()==2?"=":"-")
 				+ (mol.indexOf(bnd.getAtom2())+1)
 				+" has stereo flags: "+topo);
 		}
 		if (chiral != 0) {
 		    logger.info("Bond "+(i+1)+":"
 				+ (mol.indexOf(bnd.getAtom1())+1)
-				+ (bnd.getType()==2?"=":"-")
+				+ (bnd.getBondType().getOrder()==2?"=":"-")
 				+ (mol.indexOf(bnd.getAtom2())+1)
 				+" has stereo flags: "+chiral);
 		}
 	    }
-	    bflags[i] = flags;
+	    bflags[i] = bondflags;
 	}
 	//System.out.print(this.mol.toFormat("sdf:-a"));
 
@@ -344,17 +326,17 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     }
 
 	@Override
-	public int generate(Chemical mol) {
-		Molecule m = null;
+	public int generate(Molecule mol) {
+		Chemical m = null;
 		try {
-			m = MolImporter.importMol(mol.toSmiles(_kekulized));
+			m = Chemical.parse(mol.toFormat("smiles"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return generate(m);
 	}
 
-	public int generate (Molecule molecule) {
+	public int generate (Chemical molecule) {
         init (molecule);
 
 	assignAtomTypes ();
@@ -417,19 +399,19 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 
 	    for (int i = 0; i < bflags.length; ++i) {
 		int flags = bflags[i];
-		MolBond bnd = mol.getBond(i);
+		Bond bnd = mol.getBond(i);
 
-		int stereo = flags & MolBond.STEREO_MASK;
-		int topo = flags & MolBond.TOPOLOGY_MASK;
-		int chiral = flags & MolBond.REACTING_CENTER_MASK;
+		int stereo = flags & ChemUtil.BondMask.STEREO_MASK;
+		int topo = flags & ChemUtil.BondMask.TOPOLOGY_MASK;
+		int chiral = flags & ChemUtil.BondMask.REACTING_CENTER_MASK;
 		if (stereo != 0) {
 		    String ez = "";
-		    if ((stereo & StereoConstants.TRANS) 
-			== StereoConstants.TRANS) {
+		    if ((stereo & ChemUtil.BondMask.TRANS)
+			== ChemUtil.BondMask.TRANS) {
 			ez += "E";
 		    }
-		    if ((stereo & StereoConstants.CIS) 
-			== StereoConstants.CIS) {
+		    if ((stereo & ChemUtil.BondMask.CIS)
+			== ChemUtil.BondMask.CIS) {
 			if (ez.length() > 0) {
 			    ez += "/";
 			}
@@ -437,19 +419,19 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 		    }
 
 		    logger.info("Bond "+bnd.getAtom1().getSymbol()
-				+ (bnd.getType()==2?"=":"-")
+				+ (bnd.getBondType().getOrder()==2?"=":"-")
 				+ bnd.getAtom2().getSymbol()
 				+ " has stereo flags: "+ez + " ("+stereo+")");
 		}
 		if (topo != 0) {
 		    logger.info("Bond "+bnd.getAtom1().getSymbol()
-				+ (bnd.getType()==2?"=":"-")
+				+ (bnd.getBondType().getOrder()==2?"=":"-")
 				+ bnd.getAtom2().getSymbol()
 				+" has stereo flags: "+topo);
 		}
 		if (chiral != 0) {
 		    logger.info("Bond "+bnd.getAtom1().getSymbol()
-				+ (bnd.getType()==2?"=":"-")
+				+ (bnd.getBondType().getOrder()==2?"=":"-")
 				+ bnd.getAtom2().getSymbol()
 				+" has stereo flags: "+chiral);
 		}
@@ -487,7 +469,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	if (canonicalTautomer == null) {
 	    if (tautomers.isEmpty()) {
 			try {
-				canonicalTautomer = Chemical.parse(mol.toFormat("smiles"));
+				canonicalTautomer = Chemical.parse(mol.toSmiles());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -502,11 +484,11 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 		for (Chemical tau : tautomers) {
 			Molecule m = null;
 			try {
-				m = MolImporter.importMol(tau.toSmiles(_kekulized));
+				m = MolImporter.importMol(tau.toSd());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			int score = scoreTautomer (m);
+			int score = scoreTautomer (m); //TODO Make this Chemical!!!
 		    if (score > bestScore || canonicalTautomer == null) {
 			canonicalTautomer = tau;
 			candidates.add(tau);
@@ -544,9 +526,10 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	return canonicalTautomer;	
     }
 
-    protected static int[] graphInvariantOrder (Molecule m) {
-	int[] gi = new int[m.getAtomCount()];
-	m.getGrinv(gi, Molecule.GRINV_STEREO|Molecule.GRINV_NOHYDROGEN);
+    protected static int[] graphInvariantOrder (Chemical m) {
+    	int[] gi = ChemUtil.getRank(m);
+	//int[] gi = new int[m.getAtomCount()];
+	//m.getGrinv(gi, Molecule.GRINV_STEREO|Molecule.GRINV_NOHYDROGEN);
 
 	IndexPair ip[] = new IndexPair[gi.length];
 	for (int i = 0; i < gi.length; ++i) {
@@ -560,6 +543,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	return gi;
     }
 
+/*
     protected static void debugStructure (Molecule m) {
 	MolAtom[] atoms = m.getAtomArray();
 	for (int i = 0; i < atoms.length; ++i) {
@@ -575,6 +559,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 			      bonds[i].getFlags());
 	}
     }
+*/
 
     static public int scoreTautomer (Molecule mol) {
 	return ChemUtil.calcMolScore(mol);
@@ -583,17 +568,17 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     protected void normalization () {
 	for (int i = 0; i < bonds.length; ++i) {
 	    if (bvisit[i] == 0) {
-		setBondOrder (bonds[i], 1);
+		setBondOrder (bonds[i], Bond.BondType.SINGLE);
 	    }
 	}
 
 	for (int i = 0; i < atoms.length; ++i) {
-	    MolAtom a = atoms[i];
+	    Atom a = atoms[i];
 	    if ((types[i] & TAU_DON) != 0) {
-		a.setImplicitHcount(a.getImplicitHcount()+3);
+		a.setImplicitHCount(a.getImplicitHCount()+3);
 	    }
 	    else if ((types[i] & TAU_OTHER) == 0) {
-		a.setImplicitHcount(a.getImplicitHcount()+4);
+		a.setImplicitHCount(a.getImplicitHCount()+4);
 	    }
 	}
     }
@@ -602,23 +587,24 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	int acc = 0, don = 0; // count of donor & acceptor
 
 	for (int i = 0; i < atoms.length; ++i) {
-	    MolAtom atom = atoms[i];
+	    Atom atom = atoms[i];
 
 	    int charge = atom.getCharge();
-	    int hcount = atom.getImplicitHcount();
+	    int hcount = atom.getImplicitHCount();
 	    int sb = hcount, db = 0, tb = 0;
 
-	    for (int j = 0; j < atom.getBondCount(); ++j) {
-		MolBond bond = atom.getBond(j);
-		switch (bond.getType()) {
+		for (Bond bond: atom.getBonds())
+	    //for (int j = 0; j < atom.getBondCount(); ++j) {
+		//Bond bond = atom.getBond(j);
+		switch (bond.getBondType().getOrder()) {
 		case 3: ++tb; break;
 		case 2: ++db; break;
 		case 1: ++sb; break;
 		}
-	    }
+	    //}
 
 	    int type = TAU_OTHER;
-	    switch (atom.getAtno()) {
+	    switch (atom.getAtomicNumber()) {
 	    case 6: /* Carbon */
 		if (charge == 0) {
 		    /* "[#6X3v4+0]=*" */
@@ -672,7 +658,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 		else if (charge == -1) {
 		    if ((sb == 2) && (db == 0) && (tb == 0)) {
 			type = TAU_DON;
-			atom.setImplicitHcount(1);
+			atom.setImplicitHCount(1);
 			atom.setCharge(0);
 			++don;
 		    }
@@ -706,10 +692,10 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 
     protected void assignNOxideAtomTypes () {
 	for (int i = 0; i < bonds.length; ++i) {
-	    MolBond bond = bonds[i];
+	    Bond bond = bonds[i];
 	    
-	    MolAtom src = bond.getAtom1();
-	    MolAtom dst = bond.getAtom2();
+	    Atom src = bond.getAtom1();
+	    Atom dst = bond.getAtom2();
 
 	    int sidx = mol.indexOf(src);
 	    int didx = mol.indexOf(dst);
@@ -718,14 +704,14 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	    int dtype = types[didx];
 	    
 	    if ((stype==TAU_NOXN) && (dtype==TAU_OSP2)) {
-		setBondOrder (bond, 1);
+		setBondOrder (bond, Bond.BondType.SINGLE);
 		types[sidx] = TAU_HYB;
 		src.setCharge(1);
 		types[didx] = TAU_OTHER;
 		dst.setCharge(-1);
 	    } 
 	    else if ((stype==TAU_OSP2) && (dtype==TAU_NOXN)) {
-		setBondOrder (bond, 1);
+		setBondOrder (bond, Bond.BondType.SINGLE);
 		types[didx] = TAU_HYB;
 		dst.setCharge(1);
 		types[sidx] = TAU_OTHER;
@@ -745,9 +731,9 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 
 	int type;
 	for (int i = 0; i < bonds.length; ++i) {
-	    if (mol.isRingBond(i)) {
-		MolAtom src = bonds[i].getAtom1();
-		MolAtom dst = bonds[i].getAtom2();
+	    if (bonds[i].isInRing()) {
+		Atom src = bonds[i].getAtom1();
+		Atom dst = bonds[i].getAtom2();
 		int six = mol.indexOf(src), dix = mol.indexOf(dst);
 		if (types[six] == TAU_OCSP3) {
 		    type = types[dix];
@@ -774,10 +760,10 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	}
 
 	for (int i = 0; i < bonds.length; ++i) {
-	    MolBond bond = bonds[i];
+	    Bond bond = bonds[i];
 
-	    MolAtom src = bond.getAtom1();
-	    MolAtom dst = bond.getAtom2();
+	    Atom src = bond.getAtom1();
+	    Atom dst = bond.getAtom2();
 	    if (((types[mol.indexOf(src)] & TAU_OTHER) == 0)
 		&& ((types[mol.indexOf(dst)] & TAU_OTHER) == 0)) {
 		bvisit[i] = 0;
@@ -796,7 +782,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	}
     }
 
-    protected void initializeTautomerAtom (int ai, MolAtom atom) {
+    protected void initializeTautomerAtom (int ai, Atom atom) {
 	if (ai < 0) {
 	    ai = mol.indexOf(atom);
 	}
@@ -807,11 +793,12 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	    //System.out.println("single");
 	    types[ai] = TAU_OTHER;
 	    avisit[ai] = 1;
-	    for (int i = 0; i < atom.getBondCount(); ++i) {
-		MolBond bond = atom.getBond(i);
+	    for (Bond bond: atom.getBonds()) {
+	    //for (int i = 0; i < atom.getBondCount(); ++i) {
+		//MolBond bond = atom.getBond(i);
 		int bi = mol.indexOf(bond);
 		if (bvisit[bi] == 0) {
-		    setBondOrder (bond, 1);
+		    setBondOrder (bond, Bond.BondType.SINGLE);
 		    bvisit[bi] = 1;
 		    initializeTautomerAtom (-1, bond.getOtherAtom(atom));
 		}
@@ -821,11 +808,12 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	    //System.out.println("double");
 	    types[ai]  = TAU_OTHER;
 	    avisit[ai] = 1;
-	    for (int i = 0; i < atom.getBondCount(); ++i) {
-		MolBond bond = atom.getBond(i);
+		for (Bond bond: atom.getBonds()) {
+	    //for (int i = 0; i < atom.getBondCount(); ++i) {
+		//MolBond bond = atom.getBond(i);
 		int bi = mol.indexOf(bond);
 		if (bvisit[bi] == 0) {
-		    setBondOrder (bond, 2);
+		    setBondOrder (bond, Bond.BondType.DOUBLE);
 		    bvisit[bi] = 1;
 		    initializeTautomerAtom (-1, bond.getOtherAtom(atom));
 		}
@@ -834,8 +822,9 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	else {
 	    //System.out.println("other");
 	    int avail = 0;
-	    for (int i = 0; i < atom.getBondCount(); ++i) {
-		MolBond bond = atom.getBond(i);
+		for (Bond bond: atom.getBonds()) {
+	    //for (int i = 0; i < atom.getBondCount(); ++i) {
+		//MolBond bond = atom.getBond(i);
 		int bi = mol.indexOf(bond);
 		if (bvisit[bi] == 0) {
 		    ++avail;
@@ -918,10 +907,11 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     }
 
     protected void dfsZone (int ai, int zone) {
-	MolAtom atom = atoms[ai];
+	Atom atom = atoms[ai];
 	zones[ai] = zone;
-	for (int i = 0; i < atom.getBondCount(); ++i) {
-	    MolAtom xatom = atom.getBond(i).getOtherAtom(atom);
+	for (Bond bond: atom.getBonds()) {
+		//for (int i = 0; i < atom.getBondCount(); ++i) {
+	    Atom xatom = bond.getOtherAtom(atom);
 	    int ix = mol.indexOf(xatom);
 	    if ((types[ix] & TAU_OTHER) == 0 && (zones[ix] == 0)) {
 		dfsZone (ix, zone);
@@ -935,10 +925,11 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 		return true;
 	}
 
-	MolAtom atom = atoms[ai];
-	for (int i = 0; i < atom.getBondCount(); ++i) {
-	    MolBond bond = atom.getBond(i);
-	    if (bond.getType() == 2 && bvisit[mol.indexOf(bond)] != 0) {
+	Atom atom = atoms[ai];
+	for (Bond bond: atom.getBonds()) {
+		//for (int i = 0; i < atom.getBondCount(); ++i) {
+	    //MolBond bond = atom.getBond(i);
+	    if (bond.getBondType().getOrder() == 2 && bvisit[mol.indexOf(bond)] != 0) {
 		return true;
 	    }
 	}
@@ -949,11 +940,12 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     protected boolean mustHaveDouble (int ai) {
 	if ((types[ai] & TAU_DON) == 0 && avisit[ai] != 0) {
 	    int doub = 0, avail = 0;
-	    MolAtom atom = atoms[ai];
-	    for (int i = 0; i < atom.getBondCount(); ++i) {
-		MolBond bond = atom.getBond(i);
+	    Atom atom = atoms[ai];
+		for (Bond bond: atom.getBonds()) {
+			//for (int i = 0; i < atom.getBondCount(); ++i) {
+			//MolBond bond = atom.getBond(i);
 		if (bvisit[mol.indexOf(bond)] != 0) {
-		    if (bond.getType() == 2)
+		    if (bond.getBondType().getOrder() == 2)
 			++doub;
 		}
 		else {
@@ -970,8 +962,13 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	    System.out.println("Recurse(depth="+depth+"): count="+count );
 	    displayZoneCounts ();
 	    //displayAtomTypes ();
-	    String smiles = mol.toFormat("smiles:q");
-	    System.out.println(smiles);
+		String smiles = null;
+		try {
+			smiles = mol.toSmiles();
+			System.out.println(smiles);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	int ix = -1;
@@ -1071,16 +1068,16 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     }
 
     protected void acceptProton (int ix) {
-	MolAtom atom = atoms[ix];
-	atom.setImplicitHcount(atom.getImplicitHcount()+1);
+	Atom atom = atoms[ix];
+	atom.setImplicitHCount(atom.getImplicitHCount()+1);
 	types[ix] = TAU_DON;
     }
 
     protected void donateProton (int ix) {
-	MolAtom atom = atoms[ix];
-	int h = atom.getImplicitHcount();
+	Atom atom = atoms[ix];
+	int h = atom.getImplicitHCount();
 	if (h > 0) {
-	    atom.setImplicitHcount(h-1);
+	    atom.setImplicitHCount(h-1);
 	}
 	types[ix] = TAU_ACC;
     }
@@ -1102,16 +1099,16 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     protected boolean kekuleTautomer (int depth) {
 	for (int i = 0; i < bonds.length; ++i) {
 	    if (bvisit[i] == 0) {
-		MolBond bnd = bonds[i];
-		MolAtom src = bnd.getAtom1();
-		MolAtom dst = bnd.getAtom2();
+		Bond bnd = bonds[i];
+		Atom src = bnd.getAtom1();
+		Atom dst = bnd.getAtom2();
 
 		bvisit[i] = depth;
-		setBondOrder (bnd, 2);
+		setBondOrder (bnd, Bond.BondType.DOUBLE);
 
 		if (propagateTautomer (src, depth+1) != 0 ||
 		    propagateTautomer (dst, depth+1) != 0) {
-		    setBondOrder (bnd, 1);
+		    setBondOrder (bnd, Bond.BondType.SINGLE);
 		    resetVisitFlags (depth + 1);
 		    
 		    if (propagateTautomer (src, depth + 1) != 0 ||
@@ -1138,16 +1135,16 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 
 	for (int i = 0; i < bonds.length; ++i) {
 	    if (bvisit[i] == 0) {
-		MolBond bnd = bonds[i];
-		MolAtom src = bnd.getAtom1();
-		MolAtom dst = bnd.getAtom2();
+		Bond bnd = bonds[i];
+		Atom src = bnd.getAtom1();
+		Atom dst = bnd.getAtom2();
 		
 		if (zones[mol.indexOf(src)] == zone) {
 		    bvisit[i] = depth;
-		    setBondOrder (bnd, 2);
+		    setBondOrder (bnd, Bond.BondType.DOUBLE);
 		    if (propagateTautomer (src, depth+1) != 0 ||
 			propagateTautomer (dst, depth+1) != 0) {
-			setBondOrder (bnd, 1);
+			setBondOrder (bnd, Bond.BondType.SINGLE);
 			resetVisitFlags (depth+1);
 			if (propagateTautomer (src, depth+1) != 0 ||
 			    propagateTautomer (dst, depth+1) != 0)
@@ -1160,13 +1157,14 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	return depth;
     }
 
-    protected int propagateTautomer (MolAtom atom, int depth) {
+    protected int propagateTautomer (Atom atom, int depth) {
 	int doub = 0, avail = 0;
-	for (int i = 0; i < atom.getBondCount(); ++i) {
-	    MolBond bnd = atom.getBond(i);
+	for (Bond bnd: atom.getBonds()) {
+	//for (int i = 0; i < atom.getBondCount(); ++i) {
+	//    MolBond bnd = atom.getBond(i);
 	    int ix = mol.indexOf(bnd);
 	    if (bvisit[ix] != 0) {
-		if (bnd.getType() == 2)
+		if (bnd.getBondType().getOrder() == 2)
 		    ++doub;
 	    }
 	    else {
@@ -1186,12 +1184,13 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 		if (avail > 0) {
 		    /* MustHaveSingle */
 		    result = 0;
-		    for (int i = 0; i < atom.getBondCount(); ++i) {
-			MolBond bnd = atom.getBond(i);
+			for (Bond bnd: atom.getBonds()) {
+				//for (int i = 0; i < atom.getBondCount(); ++i) {
+			//MolBond bnd = atom.getBond(i);
 			int bx = mol.indexOf(bnd);
 			if (bvisit[bx] == 0) {
-			    MolAtom xa = bnd.getOtherAtom(atom);
-			    setBondOrder (bnd, 1);
+			    Atom xa = bnd.getOtherAtom(atom);
+			    setBondOrder (bnd, Bond.BondType.SINGLE);
 			    bvisit[bx] = depth;
 			    stat = propagateTautomer (xa, depth);
 			    if (stat < 0)
@@ -1207,12 +1206,13 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 		    if (doub > 0) {
 			// MustHaveSingle 
 			result = 0;
-			for (int i = 0; i < atom.getBondCount(); ++i) {
-			    MolBond bnd = atom.getBond(i);
+			for (Bond bnd: atom.getBonds()) {
+			//for (int i = 0; i < atom.getBondCount(); ++i) {
+			//    MolBond bnd = atom.getBond(i);
 			    int bx = mol.indexOf(bnd);
 			    if (bvisit[bx] == 0) {
-				MolAtom xa = bnd.getOtherAtom(atom);
-				setBondOrder (bnd, 1);
+				Atom xa = bnd.getOtherAtom(atom);
+				setBondOrder (bnd, Bond.BondType.SINGLE);
 				bvisit[bx] = depth;
 				stat = propagateTautomer (xa, depth);
 				if (stat < 0)
@@ -1225,12 +1225,13 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 		    else if (avail == 1) {
 			// MustHaveDouble
 			result = 0;
-			for (int i = 0; i < atom.getBondCount(); ++i) {
-			    MolBond bnd = atom.getBond(i);
+			for (Bond bnd: atom.getBonds()) {
+			//for (int i = 0; i < atom.getBondCount(); ++i) {
+			//    MolBond bnd = atom.getBond(i);
 			    int bx = mol.indexOf(bnd);
 			    if (bvisit[bx] == 0) {
-				MolAtom xa = bnd.getOtherAtom(atom);
-				setBondOrder (bnd, 2);
+				Atom xa = bnd.getOtherAtom(atom);
+				setBondOrder (bnd, Bond.BondType.DOUBLE);
 				bvisit[bx] = depth;
 				stat = propagateTautomer (xa, depth);
 				if (stat < 0)
@@ -1255,12 +1256,13 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 		result = 0;
 		if (avail > 0) {
 		    // MustHaveSingle
-		    for (int i = 0; i < atom.getBondCount(); ++i) {
-			MolBond bnd = atom.getBond(i);
+			for (Bond bnd: atom.getBonds()) {
+		    //for (int i = 0; i < atom.getBondCount(); ++i) {
+			//MolBond bnd = atom.getBond(i);
 			int bx = mol.indexOf(bnd);
 			if (bvisit[bx] == 0) {
-			    MolAtom xa = bnd.getOtherAtom(atom);
-			    setBondOrder (bnd, 1);
+			    Atom xa = bnd.getOtherAtom(atom);
+			    setBondOrder (bnd, Bond.BondType.SINGLE);
 			    bvisit[bx] = depth;
 			    stat = propagateTautomer (xa, depth);
 			    if (stat < 0)
@@ -1283,30 +1285,37 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	return 0;
     }
 
-    protected static void setBondOrder (MolBond bnd, int order) {
+    protected static void setBondOrder (Bond bnd, Bond.BondType type) {
 	/*
 	 * Note:  setFlags must be used here because, for whatever reason,
 	 * using setType affects the order in which tautomers are generated;
 	 * that is, tautomers are no longer generated in a canonical order.
 	 */
-	bnd.setFlags(order, MolBond.TYPE_MASK);
+	//bnd.setFlags(order, MolBond.TYPE_MASK);
+	bnd.setBondType(type);
     }
 
     protected boolean generateTautomer () {
 	if (tautomers.size() < maxsize) {
-	    mol.valenceCheck();
+		for (Atom a: mol.getAtoms())
+			a.getValence();
+	    //mol.valenceCheck();
 	    adjustBondAnnotations ();
-	    Molecule tau = mol.cloneMolecule(); 
+	    Chemical tau = mol.copy();
             //for (int i = 0; i < atoms.length; ++i) {
                 //tau.getAtom(i).setAtomMap(amaps[i]);
             //}
 
 	    if (debug) {
-		logger.info("Tautomer generated: "+tau.toFormat("smiles:q"));
-	    }
+			try {
+				logger.info("Tautomer generated: "+tau.toSmiles());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 
 		try {
-			tautomers.add(Chemical.parse(tau.toFormat("smiles:q")));
+			tautomers.add(Chemical.parse(tau.toSmiles()));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -1326,19 +1335,19 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     protected void adjustBondAnnotations () {
 
 	for (int i = 0; i < bonds.length; ++i) {
-	    MolBond bnd = bonds[i];
+	    Bond bnd = bonds[i];
 	    int flags = bflags[i];
 
-	    int type = bnd.getFlags() & MolBond.TYPE_MASK;
-	    int order = flags & MolBond.TYPE_MASK;
-	    int stereo = flags & MolBond.STEREO_MASK;
-	    int topo = flags & MolBond.TOPOLOGY_MASK;
-	    int chiral = flags & MolBond.REACTING_CENTER_MASK;
+	    int type = bnd.getBondType().getOrder();//bnd.getFlags() & MolBond.TYPE_MASK;
+	    int order = ChemUtil.BondMask.type(flags);//flags & MolBond.TYPE_MASK;
+	    int stereo = ChemUtil.BondMask.stereo(flags);//flags & MolBond.STEREO_MASK;
+	    int topo = ChemUtil.BondMask.topo(flags);//flags & MolBond.TOPOLOGY_MASK;
+	    int chiral = ChemUtil.BondMask.chiral(flags);//flags & MolBond.REACTING_CENTER_MASK;
 	    if (order == type) {
 		// restore the flags if the bond type is the same
-		bnd.setFlags(stereo, MolBond.STEREO_MASK);
-		bnd.setFlags(topo, MolBond.TOPOLOGY_MASK);
-		bnd.setFlags(chiral, MolBond.REACTING_CENTER_MASK);
+		ChemUtil.BondMask.setStereo(bnd, stereo);//bnd.setFlags(stereo, MolBond.STEREO_MASK);
+		//bnd.setFlags(topo, MolBond.TOPOLOGY_MASK);  TODO !!!
+		//bnd.setFlags(chiral, MolBond.REACTING_CENTER_MASK); TODO !!!
 	    }
 	    else if (type == 1) {
 		/* 
@@ -1354,11 +1363,11 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 			//tau.getBond(i).setFlags
 			//    (0, MolBond.REACTING_CENTER_MASK);
 		    }
-		    bflags[i] &= ~MolBond.STEREO_MASK;
+			bflags[i] &= ~ChemUtil.BondMask.STEREO_MASK;//bflags[i] &= ~MolBond.STEREO_MASK;
 		}
-		bnd.setFlags(0, MolBond.STEREO_MASK);
-		bnd.setFlags(0, MolBond.TOPOLOGY_MASK);
-		bnd.setFlags(0, MolBond.REACTING_CENTER_MASK);
+		ChemUtil.BondMask.setStereo(bnd, 0);//bnd.setFlags(0, MolBond.STEREO_MASK);
+		//bnd.setFlags(0, MolBond.TOPOLOGY_MASK); TODO !!!
+		//bnd.setFlags(0, MolBond.REACTING_CENTER_MASK); TODO !!!
 	    }
 
 	    if (debug) {
@@ -1367,7 +1376,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 			("** warning: "
 			 +"stereo flag (" + stereo 
 			 +") is ignored due to bond type changing from " 
-			 + order + " to " + bnd.getType() 
+			 + order + " to " + bnd.getBondType().getOrder()
 			 + " at bond " +(i+1)+":"
 			 + (mol.indexOf(bnd.getAtom1())+1) 
 			 + "-" + (mol.indexOf(bnd.getAtom2())+1));
@@ -1377,7 +1386,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 			("** warning: "
 			 +"topology flag (" + topo 
 			 +") is ignored due to bond type changing from " 
-			 + order + " to " + bnd.getType() 
+			 + order + " to " + bnd.getBondType().getOrder()
 			 + " at bond " + (i+1)+":"
 			 + (mol.indexOf(bnd.getAtom1())+1) 
 			 + "-" + (mol.indexOf(bnd.getAtom2())+1));
@@ -1387,7 +1396,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 			("** warning: "
 			 +"chiral flag (" + chiral
 			 +") is ignored due to bond type changing from " 
-			 + order + " to " + bnd.getType() 
+			 + order + " to " + bnd.getBondType().getOrder()
 			 + " at bond " + (i+1)+":"
 			 + (mol.indexOf(bnd.getAtom1())+1) 
 			 + "-" + (mol.indexOf(bnd.getAtom2())+1));
@@ -1427,7 +1436,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
     private void displayAtomTypes () {
 	for (int i = 0; i < atoms.length; ++i) {
 	    System.err.printf("Atom %1$2d: %2$3d %3$02x\n", 
-			      i+1, atoms[i].getAtno(), types[i]);
+			      i+1, atoms[i].getAtomicNumber(), types[i]);
 	}
 	/*
 	for (int i = 0; i < bonds.length; ++i) {
@@ -1442,7 +1451,7 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 
     protected static void outputTautomers (TautomerGenerator taugen, 
 					   java.io.PrintStream os, 
-					   Molecule mol) 
+					   Chemical mol)
 	throws Exception {
 	String name = mol.getName();
 	if (name == null || name.equals("")) {
@@ -1450,8 +1459,10 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 	    mol.setName(name);
 	}
 
-	taugen.generate(mol.cloneMolecule());
-	System.out.println(mol.toFormat("smiles:q") + " " 
+	taugen.generate(mol.copy());
+	System.out.println(//mol.toSmiles(_kekulized)
+			MolImporter.importMol(mol.toSd()).toFormat("smiles:u-a")
+			   + " "
 			   + name + " has " 
 			   + taugen.getTautomerCount() 
 			   + " tautomer(s)");
@@ -1465,25 +1476,40 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 		 tau.hasMoreElements(); ++cnt) {
 	    Chemical t = tau.nextElement();
 	    Molecule m = null;
-	    m = MolImporter.importMol(t.toSmiles(_kekulized));
+		m = MolImporter.importMol(t.toSd());
+	    //m = MolImporter.importMol(t.toSmiles(_kekulized));
 	    int score = scoreTautomer (m);
 	    /*
-	      t.setProperty("TauScore", String.valueOf(score));
-	      System.out.print(t.toFormat("sdf:-a"));
+	      m.setProperty("TauScore", String.valueOf(score));
+	      System.out.print(m.toFormat("sdf:-a"));
 	    */
-	    System.out.println(//t.toSmiles(_kekulized)
-				m.toFormat("smiles:u-a")
-				+ " "+cnt
-			       + " " + score);
+	    try {
+			System.out.println(//t.toSmiles(_kekulized)
+					m.toFormat("smiles:u-a")
+							+ " " + cnt
+							+ " " + score);
+		} catch (Exception ex) {
+	    	ex.printStackTrace();
+			System.out.println(//t.toSmiles(_kekulized)
+					"WRITER ERROR"//m.toFormat("smiles:u-a")
+							+ " " + cnt
+							+ " " + score);
+		}
 	}
 
 	Chemical cantau = taugen.getCanonicalTautomer();
 	//cantau.setName("CanonicalTautomer");
 	//System.out.print(cantau.toFormat("sdf:-a"));
-		Molecule m = MolImporter.importMol(cantau.toSmiles(_kekulized));
+		Molecule m = MolImporter.importMol(cantau.toSd());
 
-		System.out.println(cantau.toSmiles(_kekulized)
-			   + "\tCanonical" + "\t" + scoreTautomer (m));
+		try {
+			System.out.println(cantau.toSmiles(_kekulized)
+					+ "\tCanonical" + "\t" + scoreTautomer(m));
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			System.out.println("WRITER ERROR"//cantau.toSmiles(_kekulized)
+					+ "\tCanonical" + "\t" + scoreTautomer(m));
+		}
 
 	/*
 	System.out.println(MolStandardizer.canonicalSMILES(cantau) 
@@ -1507,7 +1533,8 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 
 	    MolImporter mi = new MolImporter (System.in);
 	    for (Molecule mol = new Molecule (); mi.read(mol); ) {
-		outputTautomers (taugen, System.out, mol);
+	    	Chemical chem = Chemical.parse(mol.toFormat("smiles"));
+		outputTautomers (taugen, System.out, chem);
 	    }
 	}
 	else {
@@ -1515,7 +1542,8 @@ public class SayleDelanyTautomerGenerator implements TautomerGenerator {
 		MolImporter mi = new MolImporter (argv[i]);
 		for (Molecule mol = new Molecule (); mi.read(mol); ) {
 		    //st.standardize(mol);
-		    outputTautomers (taugen, System.out, mol);
+			Chemical chem = Chemical.parse(mol.toFormat("smiles"));
+		    outputTautomers (taugen, System.out, chem);
 		}
 		mi.close();
 	    }

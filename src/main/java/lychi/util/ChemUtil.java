@@ -1,5 +1,6 @@
 package lychi.util;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.logging.Level;
@@ -14,6 +15,7 @@ import chemaxon.formats.MolImporter;
 import gov.nih.ncats.molwitch.Atom;
 import gov.nih.ncats.molwitch.Bond;
 import gov.nih.ncats.molwitch.Chemical;
+import gov.nih.ncats.molwitch.GraphInvariant;
 
 
 public class ChemUtil {
@@ -86,6 +88,98 @@ public class ChemUtil {
 			bl.add(m.getBond(i));
 		}
 		return bl.toArray(new Bond[0]);
+	}
+
+	public static void clearProperties(Chemical m) {
+    	Set<String> keys = m.getProperties().keySet();
+    	for (String key: keys)
+    		m.removeProperty(key);
+	}
+
+	public static class BondMask {
+    	public static final int TYPE_MASK = 7; //1st through 3rd bits
+		// 0=any, 1=single, 2=double, 3=triple. 4=aromatic, 5=single or double, 6=single or aromatic, 7=double or aromatic
+    	public static final int STEREO_MASK = 504; //4th through 9th bits
+		// up=8, down=16, wavy=24, STEREO1_MASK=24, TRANS=32, CIS=64, CTUNSPEC=128, CTUNKNOWN=256, STEREO2_CARE=256
+    	public static final int TOPOLOGY_MASK = 1536; //10th+11th bits
+		// TOPOLOGY_RING=512, TOPOLOGY_CHAIN=1024
+    	public static final int REACTING_CENTER_MASK = 503316480; //26th through 29th bits
+		public static final int UP = 8;
+		public static final int DOWN = 16;
+		public static final int UP_OR_DOWN = 24;
+		public static final int TRANS = 32;
+		public static final int CIS = 64;
+		public static final int CIS_OR_TRANS = 128;
+		public static final int RING = 512;
+		public static final int CHAIN = 1024;
+
+		public static int type(int mask) {
+			return mask & TYPE_MASK;
+		}
+		public static int stereo(int mask) {
+			return mask & STEREO_MASK;
+		}
+		public static int topo(int mask) {
+			return mask & TOPOLOGY_MASK;
+		}
+		public static int chiral(int mask) {
+			return mask & REACTING_CENTER_MASK;
+		}
+
+		public static int getMask(Bond bond) {
+    		int mask = bond.getBondType().getOrder();
+    		if (bond.getStereo() == Bond.Stereo.UP || bond.getStereo() == Bond.Stereo.UP_INVERTED)
+    			mask = mask + UP;
+			else if (bond.getStereo() == Bond.Stereo.DOWN || bond.getStereo() == Bond.Stereo.DOWN_INVERTED)
+				mask = mask + DOWN;
+			else if (bond.getStereo() == Bond.Stereo.UP_OR_DOWN || bond.getStereo() == Bond.Stereo.UP_OR_DOWN_INVERTED)
+				mask = mask + UP_OR_DOWN;
+    		if (bond.getDoubleBondStereo() == Bond.DoubleBondStereo.E_TRANS)
+    			mask = mask + TRANS;
+			else if (bond.getDoubleBondStereo() == Bond.DoubleBondStereo.Z_CIS)
+				mask = mask + CIS;
+			else if (bond.getDoubleBondStereo() == Bond.DoubleBondStereo.E_OR_Z)
+				mask = mask + CIS_OR_TRANS;
+			if (bond.isInRing())
+				mask = mask + RING;
+			else mask = mask + CHAIN;
+			return mask;
+		}
+
+		public static void setStereo(Bond bond, int stereo) {
+			if (stereo == UP) bond.setStereo(Bond.Stereo.UP);
+			else if (stereo == DOWN) bond.setStereo(Bond.Stereo.DOWN);
+			else if (stereo == UP_OR_DOWN) bond.setStereo(Bond.Stereo.UP_OR_DOWN);
+			else bond.setStereo(Bond.Stereo.NONE);
+			if (stereo == CIS) bond.setDoubleBondStereo(Bond.DoubleBondStereo.Z_CIS);
+			else if (stereo == TRANS) bond.setDoubleBondStereo(Bond.DoubleBondStereo.E_TRANS);
+			else if (stereo == CIS_OR_TRANS) bond.setDoubleBondStereo(Bond.DoubleBondStereo.E_OR_Z);
+			else bond.setDoubleBondStereo(Bond.DoubleBondStereo.NONE);
+		}
+	}
+
+	public static int getAtomMap(Atom a) {
+    	OptionalInt oi = a.getAtomToAtomMap();
+    	if (oi.isPresent())
+    		return oi.getAsInt();
+    	return 0;
+	}
+
+	public static int[] getRank(Chemical mol) {
+		GraphInvariant gi = mol.getGraphInvariant();
+		long[] giv = new long[gi.getNumberOfAtoms()];
+		for (int i=0; i<gi.getNumberOfAtoms(); i++)
+			giv[i] =gi.getAtomInvariantValue(i);
+		Arrays.sort(giv);
+		int[] rank = new int[gi.getNumberOfAtoms()];
+		for (int i=0; i<gi.getNumberOfAtoms(); i++) {
+			for (int j=0; j<gi.getNumberOfAtoms(); j++)
+				if (gi.getAtomInvariantValue(i) == giv[j]) {
+					rank[i] = j;
+					break;
+				}
+		}
+    	return rank;
 	}
 
 	public static int[] topologyInvariant (Molecule mol) {
@@ -632,7 +726,7 @@ public class ChemUtil {
 
 		// generate a version with the original atom mapping
 		String s = m.toFormat("smiles:q"+(stereo?"":"0"));
-		out = MolImporter.importMol(s);
+		MolImporter.importMol(s, out);
 		if (DEBUG) {
 		    logger.info(smiles + " <==> " + out.toFormat("smiles:q"));
 		}
