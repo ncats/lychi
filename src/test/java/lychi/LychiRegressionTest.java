@@ -485,7 +485,12 @@ public class LychiRegressionTest {
 		
 		
 		
-		
+		//CC(C)(CO)[C@@H](O)C(=O)NCCCO
+		//CC(C)(CO)C(O)C(=O)NCCCO
+		tests.add(LychiTestInstance.equivalentLayer3("CC(C)(CO)[C@@H](O)C(=O)NCCCO","CC(C)(CO)C(O)C(=O)NCCCO")
+                .name("peptides with only stereo difference should be equivalent"));
+
+
 		
 		return tests.stream().map(ls->ls.asJunitInput()).collect(Collectors.toList());
 	}

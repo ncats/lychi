@@ -66,7 +66,8 @@ public class LyChIStandardizer {
 
     /**
      * This flag, when true, checks for "deeper" symmetry by enumerating
-     * unspecified stereo forms and confirming that they 
+     * unspecified stereo forms and confirming that they are meaningfully
+     * distinct.
      */
 	private static final boolean DEEP_SYMMETRY = true;
 	
