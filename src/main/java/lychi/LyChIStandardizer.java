@@ -58,10 +58,20 @@ public class LyChIStandardizer {
 
     /**
      * This static version value must be updated if any changes is made
-     * to this class that would be imcompatible with earlier results!!!
+     * to this class that would be incompatible with earlier results!!!
      */
     public static final int VERSION = 0x10;
 
+    
+
+    /**
+     * This flag, when true, checks for "deeper" symmetry by enumerating
+     * unspecified stereo forms and confirming that they are meaningfully
+     * distinct.
+     */
+    private static final boolean DEEP_SYMMETRY = true;
+    
+    
     static final private boolean DEBUG;
     static final private boolean UNMEX; // apply UNM extra rules
     static {
@@ -237,6 +247,7 @@ public class LyChIStandardizer {
             return null;
         }
     };
+
 
     static class  MolComparator implements Comparator<Molecule> {
         public int compare (Molecule m1, Molecule m2) {
@@ -1149,6 +1160,132 @@ public class LyChIStandardizer {
                 }
             }
         }
+        
+        if(DEEP_SYMMETRY){
+            try{
+                   
+                   Map<MolAtom,MolBond> nonChiralStereo = new LinkedHashMap<>();
+                   
+                   for(int k=0;k<m.getBondCount();k++){
+                       MolBond b = m.getBond(k);
+                       int parity = b.getFlags() & MolBond.STEREO1_MASK;
+                       MolAtom ma1=b.getAtom1();
+                       if(chirality.get(ma1)==null){
+                           if(parity!=0){
+                                   //some other parity assigned here
+    //                             if(parity==MolBond.UP)System.out.println("UP"); 
+    //                             if(parity==MolBond.DOWN)System.out.println("DOWN");
+                                   nonChiralStereo.put(ma1, b);
+                           }
+                       }
+                   }
+                   
+                   if(!nonChiralStereo.isEmpty()){
+                           String igprop=m.getProperty("IGNORE_COMPLEX");
+                           
+                           if(!"true".equals(igprop)){
+                                   m.setProperty("IGNORE_COMPLEX", "true");
+                                   
+                                   Set<int[]> rings = new HashSet<int[]>();
+                                   
+                                   int[][] sssr=m.getSSSR();
+                                   for(MolAtom ma:nonChiralStereo.keySet()){
+                                           //need to find all atoms in the ring
+                                           int im=m.indexOf(ma);
+                                           for(int[] ir:sssr){                                             
+                                                   for(int i=0;i<ir.length;i++){
+                                                           if(ir[i]==im){
+                                                                   rings.add(ir);
+                                                           }
+                                                   }
+                                                   
+                                           }
+                                   }
+                                   
+                                   for(int[] rr:rings){
+                                           Set<MolAtom> ratoms=Arrays.stream(rr)
+                                                                                              .mapToObj(i->m.getAtom(i))
+                                                                                              .collect(Collectors.toSet());
+                                           
+                                           MolBond[] bonds=ratoms.stream()
+                                                     .filter(a->!chirality.containsKey(a))
+                                                 .flatMap(a->IntStream.range(0, a.getEdgeCount()).mapToObj(i->a.getEdge(i)))
+                                                 .filter(e->!ratoms.contains(e.getNode1()) || !ratoms.contains(e.getNode2()))
+                                                 .map(b->(MolBond)b)
+                                                 .filter(b->b.getType()==1)
+                                                 .peek(b->{
+                                                     if(ratoms.contains(b.getAtom1()))b.swap();  
+                                                 })
+                                                 .toArray(i->new MolBond[i]);
+                                                                                   
+                                           BitSet bs = new BitSet(bonds.length*2);
+                                           for(int i=0;i<bonds.length;i++){
+                                                     MolBond b=bonds[i];
+                                                     int parity = b.getFlags() & MolBond.STEREO1_MASK;
+                                                     if(parity==MolBond.UP){
+                                                             bs.set(i*2);
+                                                     }else if(parity==MolBond.DOWN){
+                                                             bs.set(i*2+1);
+                                                     }else{
+                                                             bs.set(i*2);
+                                                             bs.set(i*2+1);
+                                                     }
+                                           }
+                                           
+                                           Set<String> allPossible = new HashSet<String>();
+                                           Set<String> currentPossible = new HashSet<String>();
+                                           
+                                           for(int i=0;i<Math.pow(2, bonds.length);i++){
+                                                   BitSet onOff = new BitSet(bonds.length*2);
+                                                   for(int j=0;j<bonds.length;j++){
+                                                           if((i>>j&1)==1){
+                                                                   onOff.set(j*2);
+                                                                   bonds[j].setFlags(MolBond.UP, MolBond.STEREO1_MASK);
+                                                           }else{
+                                                                   onOff.set(j*2+1);
+                                                                   bonds[j].setFlags(MolBond.DOWN, MolBond.STEREO1_MASK);
+                                                           }
+                                                   }
+                                                   Molecule mclone=m.cloneMolecule();
+                                                   //(new LyChIStandardizer()).standardize(mclone);
+                                                   String hash1=LyChIStandardizer.hashKey(mclone);
+                                                   allPossible.add(hash1);
+                                                   onOff.or(bs);
+                                                   
+                                                   if(onOff.cardinality() == bs.cardinality()){
+                                                           currentPossible.add(hash1);
+                                                   }
+                                           }
+                                           if(allPossible.size()==currentPossible.size()){
+                                                   for(int j=0;j<bonds.length;j++){
+                                                           bonds[j].setFlags(0, MolBond.STEREO1_MASK);
+                                                   }
+                                           }else{
+                                                   for(int j=0;j<bonds.length;j++){
+                                                           boolean isUp=bs.get(j*2);
+                                                           boolean isDown=bs.get(j*2+1);
+                                                           
+                                                           if(isUp && ! isDown){
+                                                                   bonds[j].setFlags(MolBond.UP, MolBond.STEREO1_MASK);
+                                                           }else if(!isUp && isDown){
+                                                                   bonds[j].setFlags(MolBond.DOWN, MolBond.STEREO1_MASK);
+                                                           }else{
+                                                                   bonds[j].setFlags(0, MolBond.STEREO1_MASK);
+                                                           }
+                                                   }
+                                           }                                       
+                                   }
+                                   
+                                   
+                                   
+                                   m.setProperty("IGNORE_COMPLEX", null);
+                           }
+                   }
+                   
+            }catch(Exception e){
+                logger.warning("Processing symmetry threw an error:" + e.getMessage());
+            }
+        }
 
         /*
          * and finally adjust the wedge/hash based on the chirality
@@ -1166,7 +1303,6 @@ public class LyChIStandardizer {
             int i = m.indexOf(me.getKey());
             m.setChirality(i, me.getValue());
         }
-        
         
         
         for (Map.Entry<MolAtom, Integer> me : chirality.entrySet()) {
@@ -2709,6 +2845,31 @@ public class LyChIStandardizer {
         return keys[0]+sep+keys[1]+sep+keys[2]+sep+keys[3];
     }
 
+    
+    private static Molecule getLayer3Equivalent(Molecule m){
+         Molecule m0=m.cloneMolecule();
+         
+         int[] atno = new int[m0.getAtomCount()];
+         for (int i = 0; i < atno.length; ++i) {
+             MolAtom a = m0.getAtom(i);
+             a.setRadical(0);
+             a.setCharge(0);
+             a.setFlags(0);
+             a.setMassno(0);
+             a.setAtomMap(i+1);
+         }
+         for (MolBond b : m0.getBondArray()) {
+            b.setStereo2Flags(b.getNode1(), b.getNode2(), 0);
+            if(b.isQuery()){ //hack
+                b.setFlags(1);
+            }
+         }
+         Molecule mout = new Molecule();
+         ChemUtil.canonicalSMILES(mout,m0,false);
+         
+         return mout;
+    }
+    
     /**
      * Extended version of the hash key that includes the topology+label
      *  layer that sits between the first and second layers of previous
@@ -2743,6 +2904,8 @@ public class LyChIStandardizer {
             if (a.getAtno() == 1)
                 m0.removeNode(a);
         }
+        
+      
 
         Molecule m1 = m0.cloneMolecule();
         int[] atno = new int[m0.getAtomCount()];
@@ -2768,7 +2931,7 @@ public class LyChIStandardizer {
         // level1: topology+atom label
 
         int[] rank;
-        {
+        if (false) {
             int MAX_ROUND = 13;
             int[][] hash = new int[MAX_ROUND][atno.length];
             for (int i = 0; i < atno.length; ++i)
@@ -2798,13 +2961,31 @@ public class LyChIStandardizer {
             }
             rank = hash[round-1];
         }
-        /*
-        m0.getGrinv(rank);
-        for (int i = 0; i < atno.length; ++i) {
-            rank[i] *= atno[i]; // update rank to resolve symmetry
+        else {
+            rank = new int[atno.length];
+            m0.getGrinv(rank);
         }
-        */
+       
+        int[] fallbackLookup = new int[atno.length];
         
+        try {
+            //set the tie-breaking priority based on the layer-3 information
+            Molecule stdLychi3Mol=getLayer3Equivalent(m1);
+            MolAtom[] matarr1=stdLychi3Mol.getAtomArray();
+            
+            for (int i = 0; i < atno.length; ++i) {
+                fallbackLookup[matarr1[i].getAtomMap()-1]=i;
+            }
+        } catch(Exception e) {
+             logger.log(Level.SEVERE, 
+                     "Can't produce simplified structure from molecule", e);
+        }
+        
+        for (int i = 0; i < atno.length; ++i) {
+            rank[i] = (rank[i]*atno[i]*2048); // update rank to resolve symmetry
+            rank[i] += fallbackLookup[i]; //tie breaking based on lychi-3 fallback order
+        }
+
         for (AtomIterator ai = new AtomIterator (m0, rank); 
              ai.hasNext(); ai.next()) {
             int index = ai.nextIndex();
@@ -2822,8 +3003,6 @@ public class LyChIStandardizer {
 
         // level2: full canonical smiles with stereo/isotope/charge...
         String level3 = molstr;
-
-        String[] hkeys = hashChain45 (level0, level1, level2, level3);
         if (DEBUG) {
             logger.info("hash layers:\n"+
                         "0: "+level0 + "\n"+
@@ -2832,7 +3011,7 @@ public class LyChIStandardizer {
                         "3: "+level3 + "\n");
         }
 
-        return hkeys;
+        return hashChain45 (level0, level1, level2, level3);
     }
 
     static String[] hashChain45 (String... strs) {
