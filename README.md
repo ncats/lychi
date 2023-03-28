@@ -22,7 +22,7 @@ target/lychi-0.5.1-jar-with-dependencies.jar
 The self-contained jar file can be invoked directly. For example:
 
 ```
-java -jar target/lychi-0.5.1-jar-with-dependencies.jar tests/standardizer_case1.smi
+java -jar target/lychi-0.7.1-jar-with-dependencies.jar tests/standardizer_case1.smi
 ```
 
 

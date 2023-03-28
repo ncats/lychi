@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<head>
+    <title>lychify</title>
+</head>
+<body>
+<h1>Welcome to lychify!</h1>
+<p>This is a web service to calculate lychi keys for any given chemical structure. See the repo here: <a href="https://github.com/ncats/lychi">https://github.com/ncats/lychi</a>.</p>
+<p>To use this application, send a POST request to /standardize with a JSON payload containing a list of SMILES strings. The response will contain a JSON payload with the standardized SMILES strings.</p>
+<p>Here's an example payload:</p>
+<pre>{
+  "smiles_list": [
+    {"smiles": "CCO", "id": "1"},
+    {"smiles": "COC", "id": "2"}
+  ]
+}</pre>
+</body>
+</html>
