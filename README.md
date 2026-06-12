@@ -1,3 +1,5 @@
+This repository has been archived and is no longer maintained.The code is provided for historical reference and may contain unpatched or unknown vulnerabilities. It should not be used in production systems.
+
 LyChI (Layered Chemical Identifier)
 ===================================
 
@@ -24,5 +26,3 @@ The self-contained jar file can be invoked directly. For example:
 ```
 java -jar target/lychi-0.5.1-jar-with-dependencies.jar tests/standardizer_case1.smi
 ```
-
-
